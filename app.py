@@ -1,0 +1,214 @@
+# -*- coding: utf-8 -*-
+import streamlit as st
+import db
+import quiz_engine
+import styles
+from views.exam_view import render_exam_view
+from views.review_view import render_review_view
+from views.practice_view import render_practice_view
+from views.stats_view import render_stats_view
+from views.manage_view import render_manage_view
+
+# 1. Initialize Session State
+quiz_engine.init_session_state(st.session_state)
+
+# 2. Page Configuration
+cur_subject = st.session_state.get('selected_subject', 'law')
+is_com_subj = (cur_subject == 'computer')
+
+page_title = "ฝึกทำข้อสอบ คอมพิวเตอร์และเทคโนโลยีสารสนเทศ" if is_com_subj else "ฝึกทำข้อสอบ กฎหมายระเบียบบริหารราชการศาลยุติธรรม"
+page_icon = "💻" if is_com_subj else "⚖️"
+
+st.set_page_config(
+    page_title=page_title,
+    page_icon=page_icon,
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# 3. Theme State & Dynamic CSS Injection
+current_theme = st.session_state.get('selected_theme', 'court_navy')
+st.markdown(styles.get_custom_css(current_theme), unsafe_allow_html=True)
+
+# 4. App Header Banner
+if is_com_subj:
+    header_html = '''
+    <div class="app-header">
+        <div>
+            <h1>💻 ระบบฝึกทำข้อสอบ คอมพิวเตอร์และเทคโนโลยีสารสนเทศ</h1>
+            <p>ฮาร์ดแวร์ ซอฟต์แวร์ MS Office เครือข่าย ความปลอดภัยไซเบอร์ พ.ร.บ.คอมฯ และ AI | เตรียมสอบศาลยุติธรรมและข้าราชการ</p>
+        </div>
+        <div style="text-align: right;">
+            <span class="nav-badge">COMPUTER & IT EXAM PREP</span>
+        </div>
+    </div>
+    '''
+else:
+    header_html = '''
+    <div class="app-header">
+        <div>
+            <h1>⚖️ ระบบฝึกทำข้อสอบ กฎหมายระเบียบบริหารราชการศาลยุติธรรม</h1>
+            <p>พ.ร.บ. ระเบียบบริหารราชการศาลยุติธรรม พ.ศ. ๒๕๔๓ (และฉบับแก้ไขเพิ่มเติม) | เตรียมสอบเจ้าพนักงานศาลยุติธรรมและนิติกร</p>
+        </div>
+        <div style="text-align: right;">
+            <span class="nav-badge">COURT OF JUSTICE EXAM PREP</span>
+        </div>
+    </div>
+    '''
+st.markdown(header_html, unsafe_allow_html=True)
+
+# 5. Quick Subject Switcher Buttons (Top Toolbar)
+col_btn1, col_btn2, col_blank = st.columns([1.3, 1.3, 2.4])
+with col_btn1:
+    law_type = "primary" if not is_com_subj else "secondary"
+    if st.button("⚖️ วิชากฎหมายศาลยุติธรรม", type=law_type, use_container_width=True):
+        if st.session_state.selected_subject != 'law':
+            st.session_state.selected_subject = 'law'
+            st.session_state.exam_active = False
+            st.session_state.exam_submitted = False
+            st.session_state.practice_q_idx = 0
+            st.session_state.review_q_idx = 0
+            st.rerun()
+
+with col_btn2:
+    com_type = "primary" if is_com_subj else "secondary"
+    if st.button("💻 วิชาคอมพิวเตอร์และสารสนเทศ", type=com_type, use_container_width=True):
+        if st.session_state.selected_subject != 'computer':
+            st.session_state.selected_subject = 'computer'
+            st.session_state.exam_active = False
+            st.session_state.exam_submitted = False
+            st.session_state.practice_q_idx = 0
+            st.session_state.review_q_idx = 0
+            st.rerun()
+
+st.write("")
+
+# 6. Sidebar Navigation
+with st.sidebar:
+    st.markdown(f'''
+    <div style="text-align: center; padding: 10px 0 16px 0;">
+        <div style="font-size: 2.5rem;">{"💻" if is_com_subj else "🏛️"}</div>
+        <h3 style="margin: 4px 0 0 0; color: #1e3a8a;">{"วิชาคอมพิวเตอร์" if is_com_subj else "ศาลยุติธรรม"}</h3>
+        <p style="font-size: 0.82rem; color: #64748b; margin: 0;">ระบบจำลองสอบ & ทบทวนข้อผิดซ้ำ</p>
+    </div>
+    ''', unsafe_allow_html=True)
+    
+    # Subject Switcher in Sidebar
+    st.markdown("**📖 เลือกวิชาข้อสอบ (Subject):**")
+    subject_options = {
+        'law': '⚖️ กฎหมายศาลยุติธรรม (พ.ร.บ. 2543)',
+        'computer': '💻 คอมพิวเตอร์ & สารสนเทศ'
+    }
+    chosen_subj = st.radio(
+        "Subject Selection",
+        options=list(subject_options.keys()),
+        format_func=lambda x: subject_options[x],
+        index=list(subject_options.keys()).index(cur_subject) if cur_subject in subject_options else 0,
+        key="sidebar_subject_radio",
+        label_visibility="collapsed"
+    )
+    if chosen_subj != st.session_state.selected_subject:
+        st.session_state.selected_subject = chosen_subj
+        st.session_state.exam_active = False
+        st.session_state.exam_submitted = False
+        st.session_state.practice_q_idx = 0
+        st.session_state.review_q_idx = 0
+        st.rerun()
+        
+    st.write("---")
+    st.markdown("**📌 เลือกโหมดการทำงาน:**")
+    
+    nav_options = {
+        'exam': '🏛️ จำลองสอบจริง (50 ข้อ 60 นาที)',
+        'review': '🔄 ทบทวนข้อผิดซ้ำ (Mistake Bank)',
+        'practice': '📚 ฝึกทำแยกหมวดหมู่ (Practice)',
+        'stats': '📊 แดชบอร์ดสถิติ & จุดอ่อน',
+        'manage': '⚙️ คลังข้อสอบ & จัดการ'
+    }
+    
+    # Handle page switching
+    current_key = st.session_state.current_page
+    if current_key not in nav_options:
+        current_key = 'exam'
+        st.session_state.current_page = 'exam'
+        
+    selected_page = st.radio(
+        "Navigation",
+        options=list(nav_options.keys()),
+        format_func=lambda x: nav_options[x],
+        index=list(nav_options.keys()).index(current_key),
+        label_visibility="collapsed"
+    )
+    
+    if selected_page != st.session_state.current_page:
+        # If user is in an active exam, ask before leaving
+        if st.session_state.exam_active and not st.session_state.exam_submitted:
+            st.warning("⚠️ การเปลี่ยนหน้าจะทำให้การสอบรอบปัจจุบันสิ้นสุดลง")
+            if st.button("ยืนยันเปลี่ยนหน้า", type="primary"):
+                st.session_state.exam_active = False
+                st.session_state.current_page = selected_page
+                st.rerun()
+        else:
+            st.session_state.current_page = selected_page
+            st.rerun()
+            
+    st.write("---")
+    
+    # Theme Customizer Widget
+    st.markdown("**🎨 เลือกธีมสีข้อสอบ (Theme):**")
+    theme_keys = list(styles.THEMES.keys())
+    cur_theme_idx = theme_keys.index(st.session_state.selected_theme) if st.session_state.selected_theme in theme_keys else 0
+    
+    chosen_theme = st.selectbox(
+        "เลือกธีมสี:",
+        options=theme_keys,
+        format_func=lambda k: styles.THEMES[k]['name'],
+        index=cur_theme_idx,
+        key="theme_selector_dropdown",
+        label_visibility="collapsed"
+    )
+    if chosen_theme != st.session_state.selected_theme:
+        st.session_state.selected_theme = chosen_theme
+        st.rerun()
+        
+    st.write("---")
+    
+    # Sidebar Quick Stats Widget (Filtered by active subject)
+    db_stats = db.get_dashboard_stats(subject=cur_subject)
+    st.markdown(f'''
+    <div style="background: #f1f5f9; padding: 14px; border-radius: 12px; font-size: 0.85rem; border: 1px solid #e2e8f0;">
+        <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">📈 สรุปภาพรวม ({ "คอมพิวเตอร์" if is_com_subj else "กฎหมายศาล" })</div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+            <span style="color: #64748b;">คลังข้อสอบ:</span>
+            <b>{db_stats['total_bank_questions']} ข้อ</b>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+            <span style="color: #64748b;">ฝึกไปแล้ว:</span>
+            <b>{db_stats['practiced_count']} ข้อ</b>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+            <span style="color: #64748b;">ข้อผิดค้างทบทวน:</span>
+            <b style="color: #ef4444;">{db_stats['mistake_count']} ข้อ</b>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+            <span style="color: #64748b;">ความแม่นยำ:</span>
+            <b style="color: #10b981;">{db_stats['overall_accuracy']}%</b>
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
+    
+    st.write("")
+    st.caption("พัฒนาสำหรับเตรียมสอบข้าราชการศาลยุติธรรม © 2026")
+
+# 7. Main View Router
+if st.session_state.current_page == 'exam':
+    render_exam_view()
+elif st.session_state.current_page == 'review':
+    render_review_view()
+elif st.session_state.current_page == 'practice':
+    render_practice_view()
+elif st.session_state.current_page == 'stats':
+    render_stats_view()
+elif st.session_state.current_page == 'manage':
+    render_manage_view()
+

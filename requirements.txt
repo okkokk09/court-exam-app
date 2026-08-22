@@ -1,0 +1,8 @@
+# Core Web Application Framework
+streamlit>=1.30.0
+
+# Data Processing & Utilities
+pandas>=2.0.0
+
+# Optional: PDF Document Processing (for reading exam law reference PDFs)
+pypdf>=4.0.0
