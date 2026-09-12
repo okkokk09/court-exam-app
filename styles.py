@@ -427,17 +427,45 @@ def get_custom_css(theme_key='court_navy'):
     }}
 
     /* Buttons Style */
-    .stButton > button {{
+    .stButton > button {
         border-radius: 10px;
         font-weight: 600;
         font-size: 0.95rem;
         padding: 8px 20px;
         transition: all 0.2s ease;
-    }}
+    }
+
+    /* Choice Option Buttons in Practice & Review */
+    div[data-testid="stButton"] > button:has(strong) {
+        text-align: left !important;
+        justify-content: flex-start !important;
+        padding: 12px 18px !important;
+        border-radius: 12px !important;
+        font-size: 1.05rem !important;
+        line-height: 1.5 !important;
+        border: 1.5px solid {t['radio_label_border']} !important;
+        background-color: {t['card_bg']} !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03) !important;
+    }
+
+    div[data-testid="stButton"] > button:has(strong):hover {
+        border-color: {t['primary_color']} !important;
+        background-color: {t['radio_active_bg']} !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.08) !important;
+    }
+
+    div[data-testid="stButton"] > button:has(strong) p {
+        text-align: left !important;
+        margin: 0 !important;
+        font-size: 1.05rem !important;
+        line-height: 1.5 !important;
+        color: {t['text_color']} !important;
+    }
 
     /* Hide Streamlit default hamburger menu & footer */
-    #MainMenu {{visibility: hidden;}}
-    footer {{visibility: hidden;}}
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
     </style>
     '''
 

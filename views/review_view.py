@@ -79,103 +79,172 @@ def render_interactive_review(questions):
         
     q = questions[idx]
     
-    # Progress & Stats header
-    st.markdown(f'''
-    <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 18px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
-        <div>
-            <span style="font-weight: 700; color: #1e3a8a;">ข้อที่ {idx + 1} จาก {total}</span>
-            <span class="q-category-tag" style="margin-left: 8px;">{q.get('category', 'ทั่วไป')}</span>
-        </div>
-        <div>
-            <span style="font-size: 0.85rem; color: #ef4444; font-weight: 600;">❌ เคยตอบผิด: {q['times_wrong']} ครั้ง</span> |
-            <span style="font-size: 0.85rem; color: #10b981; font-weight: 600;">✅ เคยตอบถูก: {q['times_correct']} ครั้ง</span>
-        </div>
-    </div>
-    ''', unsafe_allow_html=True)
+    if 'review_answers' not in st.session_state:
+        st.session_state.review_answers = {}
+    review_answers = st.session_state.review_answers
+
+    # Two-column layout: Left (70%) Question & Choices, Right (30%) Mistake Navigator Palette
+    col_main, col_sidebar = st.columns([2.8, 1.2])
     
-    # Question Card
-    st.markdown(f'''
-    <div class="question-card" style="border-left: 5px solid #ef4444;">
-        <div class="q-text" style="margin-bottom: 16px;">
-            {q['question']}
-        </div>
-    </div>
-    ''', unsafe_allow_html=True)
-    
-    options = q['options']
-    choice_letters = styles.get_choice_letters()
-    correct_idx = q.get('answer_index', 0)
-    
-    # Check if this question has been answered
-    answered_info = st.session_state.get('review_answers', {}).get(idx, None)
-    
-    if answered_info is None:
-        st.markdown("<p style='font-size: 1rem; font-weight: 600; color: #4338ca; margin-bottom: 10px;'>⚡ แตะเลือกคำตอบ (ตรวจพร้อมเฉลยทันที):</p>", unsafe_allow_html=True)
-        for c_idx, opt in enumerate(options):
-            c_letter = choice_letters[c_idx]
-            if st.button(f"**{c_letter}.**  {opt}", key=f"rev_btn_{q['id']}_{idx}_{c_idx}", use_container_width=True):
-                is_correct = (c_idx == correct_idx)
-                db.record_answer(q['id'], c_idx, is_correct)
-                if 'review_answers' not in st.session_state:
-                    st.session_state.review_answers = {}
-                st.session_state.review_answers[idx] = {'selected': c_idx, 'is_correct': is_correct}
-                st.rerun()
-                
-        st.write("")
-        c_btn1, c_btn2 = st.columns([1, 1])
-        with c_btn1:
-            if st.button("⬅️ ข้อก่อนหน้า", disabled=(idx == 0), key="rev_prev_unans", use_container_width=True):
-                st.session_state.review_q_idx -= 1
-                st.rerun()
-        with c_btn2:
-            if st.button("ข้ามไปข้อถัดไป ➡️", disabled=(idx == total - 1), key="rev_next_unans", use_container_width=True):
-                st.session_state.review_q_idx += 1
-                st.rerun()
-    else:
-        user_choice = answered_info['selected']
-        is_correct = answered_info['is_correct']
-        
-        st.markdown("<p style='font-size: 1rem; font-weight: 600; color: #4338ca; margin-bottom: 10px;'>🎯 ผลการตรวจคำตอบ:</p>", unsafe_allow_html=True)
-        for c_idx, opt in enumerate(options):
-            c_letter = choice_letters[c_idx]
-            if c_idx == correct_idx and c_idx == user_choice:
-                st.success(f"**{c_letter}.**  {opt}  *(คำตอบของคุณ - ถูกต้อง! ✅)*")
-            elif c_idx == correct_idx:
-                st.success(f"**{c_letter}.**  {opt}  *(เฉลยที่ถูกต้อง 🎯)*")
-            elif c_idx == user_choice:
-                st.error(f"**{c_letter}.**  {opt}  *(คุณเลือกข้อนี้ ❌)*")
-            else:
-                st.markdown(f'''
-                <div style="padding: 10px 14px; background: #f8fafc; border-radius: 8px; margin-bottom: 6px; border: 1px solid #e2e8f0; color: #475569; font-size: 0.95rem;">
-                    <b>{c_letter}.</b> {opt}
-                </div>
-                ''', unsafe_allow_html=True)
-                
-        # Explanation Box
+    with col_main:
+        # Progress & Stats header
         st.markdown(f'''
-        <div class="{'explanation-box' if is_correct else 'explanation-wrong-box'}">
-            <span class="law-ref-pill">📖 อ้างอิง: {q.get('law_ref', 'พ.ร.บ.ระเบียบบริหารราชการศาลยุติธรรม')}</span><br>
-            <b>เหตุผลและคำอธิบาย:</b> {q.get('explanation', '')}
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 18px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
+            <div>
+                <span style="font-weight: 700; color: #1e3a8a;">ข้อที่ {idx + 1} จาก {total}</span>
+                <span class="q-category-tag" style="margin-left: 8px;">{q.get('category', 'ทั่วไป')}</span>
+            </div>
+            <div>
+                <span style="font-size: 0.85rem; color: #ef4444; font-weight: 600;">❌ เคยตอบผิด: {q['times_wrong']} ครั้ง</span> |
+                <span style="font-size: 0.85rem; color: #10b981; font-weight: 600;">✅ เคยตอบถูก: {q['times_correct']} ครั้ง</span>
+            </div>
         </div>
         ''', unsafe_allow_html=True)
         
-        # Legal References & Precedents Engine
-        legal_engine.render_legal_reference_expander(q, expanded=True)
+        # Progress
+        st.progress((idx + 1) / total, text=f"ทบทวนไปแล้ว {idx + 1}/{total} ข้อ")
         
-        st.write("")
-        c_btn1, c_btn2, c_btn3 = st.columns([1, 1.5, 1])
-        with c_btn1:
-            if st.button("⬅️ ข้อก่อนหน้า", disabled=(idx == 0), key="rev_prev_ans", use_container_width=True):
-                st.session_state.review_q_idx -= 1
+        # Question Card
+        st.markdown(f'''
+        <div class="question-card" style="border-left: 5px solid #ef4444;">
+            <div class="q-text" style="margin-bottom: 16px;">
+                {q['question']}
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        options = q['options']
+        choice_letters = styles.get_choice_letters()
+        correct_idx = q.get('answer_index', 0)
+        
+        # Check if this question has been answered
+        answered_info = review_answers.get(idx, None)
+        
+        if answered_info is None:
+            st.markdown("<p style='font-size: 1rem; font-weight: 600; color: #4338ca; margin-bottom: 10px;'>⚡ แตะเลือกคำตอบ (ตรวจพร้อมเฉลยทันที):</p>", unsafe_allow_html=True)
+            for c_idx, opt in enumerate(options):
+                c_letter = choice_letters[c_idx]
+                if st.button(f"**{c_letter}.**  {opt}", key=f"rev_btn_{q['id']}_{idx}_{c_idx}", use_container_width=True):
+                    is_correct = (c_idx == correct_idx)
+                    db.record_answer(q['id'], c_idx, is_correct)
+                    st.session_state.review_answers[idx] = {'selected': c_idx, 'is_correct': is_correct}
+                    st.rerun()
+                    
+            st.write("")
+            c_btn1, c_btn2 = st.columns([1, 1])
+            with c_btn1:
+                if st.button("⬅️ ข้อก่อนหน้า", disabled=(idx == 0), key="rev_prev_unans", use_container_width=True):
+                    st.session_state.review_q_idx -= 1
+                    st.rerun()
+            with c_btn2:
+                if st.button("ข้ามไปข้อถัดไป ➡️", disabled=(idx == total - 1), key="rev_next_unans", use_container_width=True):
+                    st.session_state.review_q_idx += 1
+                    st.rerun()
+        else:
+            user_choice = answered_info['selected']
+            is_correct = answered_info['is_correct']
+            
+            st.markdown("<p style='font-size: 1rem; font-weight: 600; color: #4338ca; margin-bottom: 10px;'>🎯 ผลการตรวจคำตอบ:</p>", unsafe_allow_html=True)
+            for c_idx, opt in enumerate(options):
+                c_letter = choice_letters[c_idx]
+                if c_idx == correct_idx and c_idx == user_choice:
+                    st.success(f"**{c_letter}.**  {opt}  *(คำตอบของคุณ - ถูกต้อง! ✅)*")
+                elif c_idx == correct_idx:
+                    st.success(f"**{c_letter}.**  {opt}  *(เฉลยที่ถูกต้อง 🎯)*")
+                elif c_idx == user_choice:
+                    st.error(f"**{c_letter}.**  {opt}  *(คุณเลือกข้อนี้ ❌)*")
+                else:
+                    st.markdown(f'''
+                    <div style="padding: 10px 14px; background: #f8fafc; border-radius: 8px; margin-bottom: 6px; border: 1px solid #e2e8f0; color: #475569; font-size: 0.95rem;">
+                        <b>{c_letter}.</b> {opt}
+                    </div>
+                    ''', unsafe_allow_html=True)
+                    
+            # Explanation Box
+            st.markdown(f'''
+            <div class="{'explanation-box' if is_correct else 'explanation-wrong-box'}">
+                <span class="law-ref-pill">📖 อ้างอิง: {q.get('law_ref', 'พ.ร.บ.ระเบียบบริหารราชการศาลยุติธรรม')}</span><br>
+                <b>เหตุผลและคำอธิบาย:</b> {q.get('explanation', '')}
+            </div>
+            ''', unsafe_allow_html=True)
+            
+            # Legal References & Precedents Engine
+            legal_engine.render_legal_reference_expander(q, expanded=True)
+            
+            st.write("")
+            c_btn1, c_btn2, c_btn3 = st.columns([1, 1.5, 1])
+            with c_btn1:
+                if st.button("⬅️ ข้อก่อนหน้า", disabled=(idx == 0), key="rev_prev_ans", use_container_width=True):
+                    st.session_state.review_q_idx -= 1
+                    st.rerun()
+            with c_btn2:
+                if st.button("ข้อถัดไป ➡️", disabled=(idx == total - 1), type="primary", key="rev_next_ans", use_container_width=True):
+                    st.session_state.review_q_idx += 1
+                    st.rerun()
+            with c_btn3:
+                if st.button("🔄 ตอบข้อนี้ใหม่", key="rev_retry_btn", use_container_width=True, help="ล้างคำตอบของข้อนี้เพื่อลองเลือกใหม่อีกครั้ง"):
+                    del st.session_state.review_answers[idx]
+                    st.rerun()
+
+    # Sidebar / Right Navigator Palette
+    with col_sidebar:
+        st.markdown("<h4 style='margin: 0 0 10px 0;'>📌 แผงเลือกข้อทบทวน</h4>", unsafe_allow_html=True)
+        
+        # Legend
+        st.markdown('''
+        <div style="font-size: 0.78rem; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+            <span>🔵 กำลังทำ</span>
+            <span>🟢 แก้ถูก</span>
+            <span>🔴 ยังผิด</span>
+            <span>⚪ ยังไม่ทำ</span>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        # Grid of questions
+        grid_cols = st.columns(5)
+        for i in range(total):
+            col_target = grid_cols[i % 5]
+            is_cur = (i == idx)
+            ans_info = review_answers.get(i, None)
+            
+            label = f"{i+1}"
+            if ans_info is not None:
+                label += "✅" if ans_info['is_correct'] else "❌"
+                
+            btn_type = "primary" if is_cur else "secondary"
+            if col_target.button(label, key=f"rev_nav_{i}", type=btn_type, use_container_width=True):
+                st.session_state.review_q_idx = i
                 st.rerun()
-        with c_btn2:
-            if st.button("ข้อถัดไป ➡️", disabled=(idx == total - 1), type="primary", key="rev_next_ans", use_container_width=True):
-                st.session_state.review_q_idx += 1
-                st.rerun()
-        with c_btn3:
-            if st.button("🔄 ตอบข้อนี้ใหม่", key="rev_retry_btn", use_container_width=True, help="ล้างคำตอบของข้อนี้เพื่อลองเลือกใหม่อีกครั้ง"):
-                del st.session_state.review_answers[idx]
-                st.rerun()
+                
+        st.write("---")
+        
+        # Stats summary in right column
+        ans_count = len(review_answers)
+        correct_count = sum(1 for a in review_answers.values() if a['is_correct'])
+        wrong_count = sum(1 for a in review_answers.values() if not a['is_correct'])
+        acc = int((correct_count / ans_count * 100)) if ans_count > 0 else 0
+        
+        st.markdown(f'''
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 12px;">
+            <div style="font-weight: 700; color: #4338ca; margin-bottom: 8px; font-size: 0.9rem;">🎯 สรุปผลการซ่อมข้อผิด</div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+                <span style="color: #64748b;">ทบทวนแล้ว:</span>
+                <b>{ans_count} / {total} ข้อ</b>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+                <span style="color: #10b981;">แก้ไขถูก:</span>
+                <b style="color: #10b981;">{correct_count} ข้อ</b>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+                <span style="color: #ef4444;">ยังผิดอยู่:</span>
+                <b style="color: #ef4444;">{wrong_count} ข้อ</b>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                <span style="color: #64748b;">อัตราแก้สำเร็จ:</span>
+                <b style="color: {'#10b981' if acc >= 60 else '#ef4444'};">{acc}%</b>
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
 
 def render_flashcards_view(questions):
     st.markdown("คลิกที่แต่ละข้อเพื่อเปิดดูเฉลย คำอธิบาย และมาตรากฎหมายอ้างอิง")
