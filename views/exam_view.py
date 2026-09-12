@@ -104,13 +104,6 @@ def render_exam_lobby():
             </div>
         </div>
         ''', unsafe_allow_html=True)
-        
-        # Quick Switch or Peek at the other subject
-        other_subject = 'law' if is_com else 'computer'
-        other_label = '⚖️ สลับไปดู/สอบวิชากฎหมาย' if is_com else '💻 สลับไปดู/สอบวิชาคอมพิวเตอร์'
-        if st.button(other_label, key="lobby_sw_other", use_container_width=True):
-            st.session_state.selected_subject = other_subject
-            st.rerun()
 
 def render_exam_in_progress():
     questions = st.session_state.exam_questions
