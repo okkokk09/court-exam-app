@@ -90,18 +90,15 @@ def init_db():
     conn.commit()
     conn.close()
     
-    # Seed default questions if empty
+    # Seed and sync questions from JSON
     seed_questions_if_empty()
 
 def seed_questions_if_empty():
     conn = get_connection()
     cursor = conn.cursor()
     
-    # Seed Law Questions
-    cursor.execute("SELECT COUNT(*) as count FROM questions WHERE subject = 'law' OR subject IS NULL")
-    law_count = cursor.fetchone()['count']
-    
-    if law_count == 0 and os.path.exists(QUESTIONS_JSON_PATH):
+    # Sync Law Questions
+    if os.path.exists(QUESTIONS_JSON_PATH):
         with open(QUESTIONS_JSON_PATH, 'r', encoding='utf-8') as f:
             items = json.load(f)
             
@@ -122,11 +119,8 @@ def seed_questions_if_empty():
             ))
         conn.commit()
         
-    # Seed Computer Questions
-    cursor.execute("SELECT COUNT(*) as count FROM questions WHERE subject = 'computer'")
-    com_count = cursor.fetchone()['count']
-    
-    if com_count == 0 and os.path.exists(COMPUTER_JSON_PATH):
+    # Sync Computer Questions
+    if os.path.exists(COMPUTER_JSON_PATH):
         with open(COMPUTER_JSON_PATH, 'r', encoding='utf-8') as f:
             items = json.load(f)
             
