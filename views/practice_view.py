@@ -54,7 +54,7 @@ def render_practice_view():
         st.session_state.practice_current_cat = selected_cat
         st.session_state.practice_current_subj = subject
         st.session_state.practice_q_idx = 0
-        st.session_state.practice_show_answer = False
+        st.session_state.practice_answers = {}
         
     questions = st.session_state.get('practice_loaded_qs', [])
         
@@ -101,53 +101,59 @@ def render_practice_view():
     
     options = q['options']
     choice_letters = styles.get_choice_letters()
-    formatted_options = [f"{choice_letters[i]}.  {opt}" for i, opt in enumerate(options)]
+    correct_idx = q.get('answer_index', 0)
     
-    st.markdown("<p style='font-size: 1rem; font-weight: 600; color: #047857; margin-bottom: 8px;'>📝 เลือกคำตอบของคุณ:</p>", unsafe_allow_html=True)
-    selected_idx = st.radio(
-        "ตัวเลือกคำตอบ",
-        options=list(range(len(options))),
-        format_func=lambda i: formatted_options[i],
-        key=f"practice_radio_{q['id']}_{idx}",
-        index=None,
-        label_visibility="collapsed"
-    )
+    # Check if this question has been answered
+    answered_info = st.session_state.get('practice_answers', {}).get(idx, None)
     
-    st.write("")
-    c1, c2, c3, c4 = st.columns([1, 1, 1.5, 1])
-    with c1:
-        if st.button("⬅️ ข้อก่อน", disabled=(idx == 0), key="prac_prev", use_container_width=True):
-            st.session_state.practice_q_idx -= 1
-            st.session_state.practice_show_answer = False
-            st.rerun()
-    with c2:
-        if st.button("ข้อถัดไป ➡️", disabled=(idx == total - 1), key="prac_next", use_container_width=True):
-            st.session_state.practice_q_idx += 1
-            st.session_state.practice_show_answer = False
-            st.rerun()
-    with c3:
-        if st.button("🎯 ตรวจคำตอบ & เฉลย", type="primary", key="prac_check", use_container_width=True):
-            if selected_idx is None:
-                st.warning("กรุณาเลือกคำตอบก่อน")
-            else:
-                st.session_state.practice_show_answer = True
-                is_correct = (selected_idx == q['answer_index'])
-                db.record_answer(q['id'], selected_idx, is_correct)
+    if answered_info is None:
+        st.markdown("<p style='font-size: 1rem; font-weight: 600; color: #047857; margin-bottom: 10px;'>⚡ แตะเลือกคำตอบ (ตรวจพร้อมเฉลยทันที):</p>", unsafe_allow_html=True)
+        for c_idx, opt in enumerate(options):
+            c_letter = choice_letters[c_idx]
+            if st.button(f"**{c_letter}.**  {opt}", key=f"prac_btn_{q['id']}_{idx}_{c_idx}", use_container_width=True):
+                is_correct = (c_idx == correct_idx)
+                db.record_answer(q['id'], c_idx, is_correct)
+                if 'practice_answers' not in st.session_state:
+                    st.session_state.practice_answers = {}
+                st.session_state.practice_answers[idx] = {'selected': c_idx, 'is_correct': is_correct}
                 st.rerun()
-    with c4:
-        bm_label = "🚩 ปักหมุดแล้ว" if is_bm else "🏳️ ปักหมุด"
-        if st.button(bm_label, key="prac_bm", use_container_width=True):
-            db.toggle_bookmark(q['id'])
-            st.rerun()
-
-    # Feedback Box
-    if st.session_state.get('practice_show_answer', False) and selected_idx is not None:
-        is_correct = (selected_idx == q['answer_index'])
-        if is_correct:
-            st.success(f"🎉 ถูกต้อง! {choice_letters[q['answer_index']]}. {options[q['answer_index']]}")
-        else:
-            st.error(f"❌ ยังไม่ถูกต้อง (คำตอบที่ถูกคือ: {choice_letters[q['answer_index']]}. {options[q['answer_index']]})")
-            
+                
+        st.write("")
+        c1, c2, c3 = st.columns([1, 1, 1])
+        with c1:
+            if st.button("⬅️ ข้อก่อนหน้า", disabled=(idx == 0), key="prac_prev_unans", use_container_width=True):
+                st.session_state.practice_q_idx -= 1
+                st.rerun()
+        with c2:
+            if st.button("ข้ามไปข้อถัดไป ➡️", disabled=(idx == total - 1), key="prac_next_unans", use_container_width=True):
+                st.session_state.practice_q_idx += 1
+                st.rerun()
+        with c3:
+            bm_label = "🚩 ปักหมุดแล้ว" if is_bm else "🏳️ ปักหมุด"
+            if st.button(bm_label, key="prac_bm_unans", use_container_width=True):
+                db.toggle_bookmark(q['id'])
+                st.rerun()
+    else:
+        user_choice = answered_info['selected']
+        is_correct = answered_info['is_correct']
+        
+        st.markdown("<p style='font-size: 1rem; font-weight: 600; color: #047857; margin-bottom: 10px;'>🎯 ผลการตรวจคำตอบ:</p>", unsafe_allow_html=True)
+        for c_idx, opt in enumerate(options):
+            c_letter = choice_letters[c_idx]
+            if c_idx == correct_idx and c_idx == user_choice:
+                st.success(f"**{c_letter}.**  {opt}  *(คำตอบของคุณ - ถูกต้อง! ✅)*")
+            elif c_idx == correct_idx:
+                st.success(f"**{c_letter}.**  {opt}  *(เฉลยที่ถูกต้อง 🎯)*")
+            elif c_idx == user_choice:
+                st.error(f"**{c_letter}.**  {opt}  *(คุณเลือกข้อนี้ ❌)*")
+            else:
+                st.markdown(f'''
+                <div style="padding: 10px 14px; background: #f8fafc; border-radius: 8px; margin-bottom: 6px; border: 1px solid #e2e8f0; color: #475569; font-size: 0.95rem;">
+                    <b>{c_letter}.</b> {opt}
+                </div>
+                ''', unsafe_allow_html=True)
+                
+        # Explanation Box
         st.markdown(f'''
         <div class="{'explanation-box' if is_correct else 'explanation-wrong-box'}">
             <span class="law-ref-pill">📖 อ้างอิง: {q.get('law_ref', 'พ.ร.บ.ระเบียบบริหารราชการศาลยุติธรรม')}</span><br>
@@ -157,3 +163,23 @@ def render_practice_view():
         
         # Legal References & Precedents Engine
         legal_engine.render_legal_reference_expander(q, expanded=True)
+        
+        st.write("")
+        c1, c2, c3, c4 = st.columns([1, 1.5, 1, 1])
+        with c1:
+            if st.button("⬅️ ข้อก่อนหน้า", disabled=(idx == 0), key="prac_prev_ans", use_container_width=True):
+                st.session_state.practice_q_idx -= 1
+                st.rerun()
+        with c2:
+            if st.button("ข้อถัดไป ➡️", disabled=(idx == total - 1), type="primary", key="prac_next_ans", use_container_width=True):
+                st.session_state.practice_q_idx += 1
+                st.rerun()
+        with c3:
+            if st.button("🔄 ตอบข้อนี้ใหม่", key="prac_retry_btn", use_container_width=True, help="ล้างคำตอบของข้อนี้เพื่อลองเลือกใหม่อีกครั้ง"):
+                del st.session_state.practice_answers[idx]
+                st.rerun()
+        with c4:
+            bm_label = "🚩 ปักหมุดแล้ว" if is_bm else "🏳️ ปักหมุด"
+            if st.button(bm_label, key="prac_bm_ans", use_container_width=True):
+                db.toggle_bookmark(q['id'])
+                st.rerun()
