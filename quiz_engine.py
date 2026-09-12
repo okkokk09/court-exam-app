@@ -30,6 +30,7 @@ def init_session_state(st_session_state):
         'selected_theme': 'court_navy',
         'selected_subject': 'law', # 'law' or 'computer'
         'shuffle_options': True, # Shuffle choices to prevent position memorization
+        'mistakes': [], # List of questions missed in the latest exam session (Mistake Bank)
     }
     
     for key, val in defaults.items():
@@ -113,6 +114,29 @@ def start_review_exam(st_session_state, limit=50, filter_type='frequent_mistakes
     st_session_state.exam_result = None
     return True
 
+def start_mistakes_retest(st_session_state):
+    '''Starts a retest session containing only the questions missed in the latest exam round'''
+    mistakes = st_session_state.get('mistakes', [])
+    if not mistakes:
+        return False
+        
+    questions = list(mistakes)
+    if st_session_state.get('shuffle_options', True):
+        questions = shuffle_questions_list(questions)
+        
+    st_session_state.exam_active = True
+    st_session_state.exam_submitted = False
+    st_session_state.exam_mode = 'mistakes_retest'
+    st_session_state.exam_questions = questions
+    st_session_state.user_answers = {}
+    st_session_state.bookmarked_indices = set()
+    st_session_state.current_q_idx = 0
+    st_session_state.start_time = time.time()
+    st_session_state.duration_seconds = max(300, len(questions) * 90) # ~1.5 mins per question, min 5 mins
+    st_session_state.time_spent = 0
+    st_session_state.exam_result = None
+    return True
+
 def abandon_exam(st_session_state):
     '''Cancels the current active exam immediately without recording any stats or saving results'''
     st_session_state.exam_active = False
@@ -150,6 +174,7 @@ def calculate_and_save_exam_results(st_session_state):
     
     details = {}
     category_breakdown = {}
+    mistake_questions = []
     
     for idx, q in enumerate(questions):
         qid = q['id']
@@ -166,6 +191,7 @@ def calculate_and_save_exam_results(st_session_state):
         if user_ans is None:
             unanswered_count += 1
             status = 'unanswered'
+            mistake_questions.append(q)
         elif is_correct:
             correct_count += 1
             category_breakdown[cat]['correct'] += 1
@@ -174,6 +200,7 @@ def calculate_and_save_exam_results(st_session_state):
             wrong_count += 1
             category_breakdown[cat]['wrong'] += 1
             status = 'wrong'
+            mistake_questions.append(q)
             
         details[qid] = {
             'q_idx': idx,
@@ -209,7 +236,7 @@ def calculate_and_save_exam_results(st_session_state):
     subj = st_session_state.get('selected_subject', 'law')
     session_id = db.save_exam_session(
         mode=st_session_state.exam_mode,
-        category='รวมข้อสอบ' if st_session_state.exam_mode == 'simulation' else 'ทบทวนข้อผิด',
+        category='รวมข้อสอบ' if st_session_state.exam_mode == 'simulation' else ('วนทำซ้ำข้อผิด' if st_session_state.exam_mode == 'mistakes_retest' else 'ทบทวนข้อผิด'),
         total_q=total_q,
         score=correct_count,
         time_spent_seconds=time_spent,
@@ -221,5 +248,8 @@ def calculate_and_save_exam_results(st_session_state):
     st_session_state.exam_result = result
     st_session_state.exam_submitted = True
     st_session_state.exam_active = False
+    
+    # Update Mistake Bank in session state
+    st_session_state.mistakes = mistake_questions
     
     return result

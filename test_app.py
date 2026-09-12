@@ -126,6 +126,36 @@ class TestQuizApp(unittest.TestCase):
         self.assertEqual(len(dummy_state.user_answers), 0)
         self.assertIsNone(dummy_state.exam_result)
 
+    def test_mistakes_retest_and_session_state(self):
+        class DummySessionState(dict):
+            __getattr__ = dict.get
+            __setattr__ = dict.__setitem__
+            
+        dummy_state = DummySessionState()
+        quiz_engine.init_session_state(dummy_state)
+        quiz_engine.start_simulation_exam(dummy_state, count=20, duration_minutes=30)
+        
+        # Answer 15 correctly and 5 wrongly
+        for i in range(15):
+            correct_idx = dummy_state.exam_questions[i]['answer_index']
+            dummy_state.user_answers[i] = correct_idx
+        for i in range(15, 20):
+            correct_idx = dummy_state.exam_questions[i]['answer_index']
+            dummy_state.user_answers[i] = (correct_idx + 1) % 4
+            
+        result = quiz_engine.calculate_and_save_exam_results(dummy_state)
+        self.assertEqual(result['wrong_count'], 5)
+        self.assertEqual(len(dummy_state.mistakes), 5, 'st.session_state.mistakes should store exactly the 5 missed questions')
+        
+        # Start re-test with mistakes only
+        retest_started = quiz_engine.start_mistakes_retest(dummy_state)
+        self.assertTrue(retest_started)
+        self.assertTrue(dummy_state.exam_active)
+        self.assertEqual(dummy_state.exam_mode, 'mistakes_retest')
+        self.assertEqual(len(dummy_state.exam_questions), 5, 'Retest questions should contain only the 5 missed questions')
+        self.assertEqual(len(dummy_state.user_answers), 0)
+
 if __name__ == '__main__':
     unittest.main()
+
 

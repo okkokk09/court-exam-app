@@ -16,16 +16,25 @@ def render_review_view():
     ''', unsafe_allow_html=True)
     
     # Filter selection
+    subject = st.session_state.get('selected_subject', 'law')
+    session_mistakes = [q for q in st.session_state.get('mistakes', []) if q.get('subject', 'law') == subject or not q.get('subject')]
+    
+    filter_options = []
+    if session_mistakes:
+        filter_options.append(('session_mistakes', f"🎯 ข้อที่เพิ่งตอบผิดจากรอบล่าสุด ({len(session_mistakes)} ข้อ)"))
+        
+    filter_options.extend([
+        ('frequent_mistakes', '🔥 ข้อที่ตอบผิดบ่อยที่สุด (Top Frequent Mistakes)'),
+        ('recent_mistakes', '⏰ ข้อที่ตอบผิดล่าสุด (Recent Errors)'),
+        ('unmastered', '🛡️ ข้อที่ยังไม่แม่นยำ (Unmastered)'),
+        ('all_mistakes', '📚 ข้อที่เคยตอบผิดทั้งหมด (All Logged Mistakes)')
+    ])
+    
     col_f1, col_f2 = st.columns([2, 1])
     with col_f1:
         filter_opt = st.selectbox(
             "🎯 ตัวกรองข้อผิด:",
-            [
-                ('frequent_mistakes', '🔥 ข้อที่ตอบผิดบ่อยที่สุด (Top Frequent Mistakes)'),
-                ('recent_mistakes', '⏰ ข้อที่ตอบผิดล่าสุด (Recent Errors)'),
-                ('unmastered', '🛡️ ข้อที่ยังไม่แม่นยำ (Unmastered)'),
-                ('all_mistakes', '📚 ข้อที่เคยตอบผิดทั้งหมด (All Logged Mistakes)')
-            ],
+            filter_options,
             format_func=lambda x: x[1],
             key="review_filter_select"
         )
@@ -34,12 +43,14 @@ def render_review_view():
     with col_f2:
         limit_count = st.number_input("จำนวนข้อที่ต้องการดึง:", min_value=5, max_value=100, value=20, step=5)
         
-    subject = st.session_state.get('selected_subject', 'law')
-    
     # Reload & shuffle mistake questions if filter/subject changes
-    review_state_key = (filter_type, limit_count, subject)
+    review_state_key = (filter_type, limit_count, subject, len(session_mistakes))
     if st.session_state.get('review_current_state') != review_state_key or 'review_loaded_qs' not in st.session_state:
-        raw_mistakes = db.get_mistake_questions(limit=limit_count, filter_type=filter_type, subject=subject)
+        if filter_type == 'session_mistakes':
+            raw_mistakes = list(session_mistakes)
+        else:
+            raw_mistakes = db.get_mistake_questions(limit=limit_count, filter_type=filter_type, subject=subject)
+            
         if st.session_state.get('shuffle_options', True):
             st.session_state.review_loaded_qs = quiz_engine.shuffle_questions_list(raw_mistakes)
         else:
@@ -47,6 +58,7 @@ def render_review_view():
         st.session_state.review_current_state = review_state_key
         st.session_state.review_q_idx = 0
         st.session_state.review_show_answer = False
+        st.session_state.review_answers = {}
         
     mistake_questions = st.session_state.get('review_loaded_qs', [])
     

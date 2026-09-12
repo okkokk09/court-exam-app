@@ -125,9 +125,10 @@ def render_exam_in_progress():
     # Top Header & Timer Row
     col_t1, col_t2, col_t3 = st.columns([2.8, 1.2, 1.0])
     with col_t1:
+        mode_name = "🎯 วนทำซ้ำเฉพาะข้อที่ผิด (Mistake Bank)" if st.session_state.get('exam_mode') == 'mistakes_retest' else ("🔄 โหมดทบทวนข้อผิด" if st.session_state.get('exam_mode') == 'review_test' else "⚖️ โหมดจำลองสอบจริง")
         st.markdown(f'''
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-            <span class="nav-badge">⚖️ โหมดจำลองสอบจริง</span>
+            <span class="nav-badge">{mode_name}</span>
             <span style="color: #64748b; font-size: 0.9rem;">ข้อที่ {current_idx + 1} จาก {total_q}</span>
         </div>
         ''', unsafe_allow_html=True)
@@ -360,25 +361,72 @@ def render_exam_results():
         
     st.write("")
     
-    # Action Buttons
-    act_c1, act_c2, act_c3 = st.columns([1, 1, 1])
-    with act_c1:
-        if st.button("🔄 สอบใหม่อีกครั้ง", type="primary", use_container_width=True):
-            st.session_state.exam_submitted = False
-            st.session_state.exam_active = False
-            st.rerun()
-    with act_c2:
-        if st.button("🎯 ไปทบทวนเฉพาะข้อที่ผิด (Review Mode)", use_container_width=True):
-            st.session_state.current_page = 'review'
-            st.session_state.exam_submitted = False
-            st.session_state.exam_active = False
-            st.rerun()
-    with act_c3:
-        if st.button("📊 ดูแดชบอร์ดสถิติรวม", use_container_width=True):
-            st.session_state.current_page = 'stats'
-            st.session_state.exam_submitted = False
-            st.session_state.exam_active = False
-            st.rerun()
+    # Mistake Bank & Action Buttons
+    mistakes_list = st.session_state.get('mistakes', [])
+    has_mistakes = len(mistakes_list) > 0
+    
+    if has_mistakes:
+        mistake_count = len(mistakes_list)
+        st.markdown(f'''
+        <div style="background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border: 2px solid #ef4444; border-radius: 14px; padding: 16px 20px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);">
+            <div>
+                <div style="font-weight: 700; color: #991b1b; font-size: 1.05rem;">
+                    🎯 คลังข้อผิดเฉพาะรอบนี้ (Mistake Bank): {mistake_count} ข้อ
+                </div>
+                <div style="font-size: 0.88rem; color: #b91c1c; margin-top: 2px;">
+                    ระบบดึงเฉพาะข้อที่คุณตอบผิด/ยังไม่ได้ตอบในรอบนี้มาไว้ให้คุณวนฝึกซ้ำทันทีจนกว่าจะผ่าน 100%
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <span style="background: #ef4444; color: white; padding: 4px 12px; border-radius: 20px; font-weight: 700; font-size: 0.82rem;">
+                    {mistake_count} ข้อค้างทบทวน
+                </span>
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        act_c1, act_c2, act_c3, act_c4 = st.columns([1.4, 1, 1, 1])
+        with act_c1:
+            if st.button(f"🔁 ทำซ้ำเฉพาะข้อที่ผิด ({mistake_count} ข้อ)", type="primary", use_container_width=True, key="btn_retest_mistakes", help="ดึงเฉพาะข้อที่ตอบผิดในรอบนี้มาวนสอบซ้ำ สลับตัวเลือกใหม่ จนกว่าจะตอบถูกครบทุกข้อ"):
+                quiz_engine.start_mistakes_retest(st.session_state)
+                st.rerun()
+        with act_c2:
+            if st.button("🔄 สอบใหม่ทั้งชุด", use_container_width=True, help="เริ่มจำลองสอบใหม่ทั้งชุด 50 ข้อ"):
+                st.session_state.exam_submitted = False
+                st.session_state.exam_active = False
+                st.rerun()
+        with act_c3:
+            if st.button("📚 คลังข้อผิดทั้งหมด (Mistake Bank)", use_container_width=True, help="ไปที่โหมดทบทวนข้อผิดสะสมทั้งหมดจากฐานข้อมูล SQLite"):
+                st.session_state.current_page = 'review'
+                st.session_state.exam_submitted = False
+                st.session_state.exam_active = False
+                st.rerun()
+        with act_c4:
+            if st.button("📊 ดูแดชบอร์ดสถิติรวม", use_container_width=True):
+                st.session_state.current_page = 'stats'
+                st.session_state.exam_submitted = False
+                st.session_state.exam_active = False
+                st.rerun()
+    else:
+        st.success("🎉 ยอดเยี่ยมที่สุด! คุณทำข้อสอบรอบนี้ถูกต้องครบ 100% ไม่มีข้อผิดพลาดค้างทบทวน")
+        act_c1, act_c2, act_c3 = st.columns([1, 1, 1])
+        with act_c1:
+            if st.button("🔄 สอบชุดใหม่", type="primary", use_container_width=True):
+                st.session_state.exam_submitted = False
+                st.session_state.exam_active = False
+                st.rerun()
+        with act_c2:
+            if st.button("📚 ไปฝึกทำแยกหมวดหมู่", use_container_width=True):
+                st.session_state.current_page = 'practice'
+                st.session_state.exam_submitted = False
+                st.session_state.exam_active = False
+                st.rerun()
+        with act_c3:
+            if st.button("📊 ดูแดชบอร์ดสถิติรวม", use_container_width=True):
+                st.session_state.current_page = 'stats'
+                st.session_state.exam_submitted = False
+                st.session_state.exam_active = False
+                st.rerun()
             
     st.write("---")
     
