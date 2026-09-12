@@ -156,7 +156,7 @@ def render_exam_in_progress():
     is_critical = remaining_secs < 300 # Less than 5 mins
     
     # Top Header & Timer Row
-    col_t1, col_t2 = st.columns([3, 1])
+    col_t1, col_t2, col_t3 = st.columns([2.8, 1.2, 1.0])
     with col_t1:
         st.markdown(f'''
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
@@ -175,6 +175,13 @@ def render_exam_in_progress():
             <div class="timer-clock">{time_str}</div>
         </div>
         ''', unsafe_allow_html=True)
+
+    with col_t3:
+        st.write("")
+        if st.button("🚪 เลิกทำ (ไม่นับผล)", key="top_abandon_btn", use_container_width=True, help="ยกเลิกการสอบชุดนี้ทันที โดยไม่นำคะแนนไปบันทึกลงสถิติ"):
+            st.session_state.confirm_abandon = True
+            st.session_state.confirm_submit = False
+            st.rerun()
 
     st.write("")
     
@@ -289,18 +296,37 @@ def render_exam_in_progress():
             
         if st.button("✅ ส่งข้อสอบเพื่อตรวจผล", type="primary", use_container_width=True):
             st.session_state.confirm_submit = True
+            st.session_state.confirm_abandon = False
 
         if st.session_state.get('confirm_submit', False):
             st.warning(f"ยืนยันการส่งข้อสอบ? (ตอบแล้ว {len(st.session_state.user_answers)}/{total_q} ข้อ)")
             s_c1, s_c2 = st.columns(2)
             with s_c1:
-                if st.button("ยืนยันส่ง", type="primary", use_container_width=True):
+                if st.button("ยืนยันส่ง", type="primary", key="btn_confirm_submit_yes", use_container_width=True):
                     st.session_state.confirm_submit = False
                     quiz_engine.calculate_and_save_exam_results(st.session_state)
                     st.rerun()
             with s_c2:
-                if st.button("ทำต่อ", use_container_width=True):
+                if st.button("ทำต่อ", key="btn_confirm_submit_no", use_container_width=True):
                     st.session_state.confirm_submit = False
+                    st.rerun()
+
+        st.write("")
+        if st.button("🚫 เลิกทำข้อสอบ (ไม่บันทึกสถิติ)", use_container_width=True, help="ยกเลิกการสอบชุดนี้ทันที โดยไม่นำผลคะแนนและข้อสอบไปบันทึกลงสถิติ"):
+            st.session_state.confirm_abandon = True
+            st.session_state.confirm_submit = False
+
+        if st.session_state.get('confirm_abandon', False):
+            st.error("⚠️ **ยืนยันการเลิกทำข้อสอบ?**\n\nระบบจะยกเลิกการสอบชุดนี้ทันที โดย**ไม่นับคะแนน ไม่บันทึกสถิติ และไม่บันทึกข้อผิดพลาด**ใดๆ ทั้งสิ้น")
+            ab_c1, ab_c2 = st.columns(2)
+            with ab_c1:
+                if st.button("🔴 ยืนยันยกเลิก", type="primary", key="btn_abandon_confirm_yes", use_container_width=True):
+                    quiz_engine.abandon_exam(st.session_state)
+                    st.toast("ยกเลิกการสอบเรียบร้อยแล้ว (ไม่บันทึกสถิติ)", icon="🚪")
+                    st.rerun()
+            with ab_c2:
+                if st.button("ทำข้อสอบต่อ", key="btn_abandon_confirm_no", use_container_width=True):
+                    st.session_state.confirm_abandon = False
                     st.rerun()
 
 def render_exam_results():

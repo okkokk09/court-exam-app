@@ -108,5 +108,24 @@ class TestQuizApp(unittest.TestCase):
             self.assertEqual(len(shuffled['options']), 4)
             self.assertEqual(set(shuffled['options']), set(sample_q['options']))
 
+    def test_abandon_exam(self):
+        class DummySessionState(dict):
+            __getattr__ = dict.get
+            __setattr__ = dict.__setitem__
+            
+        dummy_state = DummySessionState()
+        quiz_engine.init_session_state(dummy_state)
+        quiz_engine.start_simulation_exam(dummy_state, count=50, duration_minutes=60)
+        self.assertTrue(dummy_state.exam_active)
+        
+        # User abandons exam
+        quiz_engine.abandon_exam(dummy_state)
+        self.assertFalse(dummy_state.exam_active)
+        self.assertFalse(dummy_state.exam_submitted)
+        self.assertEqual(len(dummy_state.exam_questions), 0)
+        self.assertEqual(len(dummy_state.user_answers), 0)
+        self.assertIsNone(dummy_state.exam_result)
+
 if __name__ == '__main__':
     unittest.main()
+

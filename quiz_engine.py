@@ -113,6 +113,20 @@ def start_review_exam(st_session_state, limit=50, filter_type='frequent_mistakes
     st_session_state.exam_result = None
     return True
 
+def abandon_exam(st_session_state):
+    '''Cancels the current active exam immediately without recording any stats or saving results'''
+    st_session_state.exam_active = False
+    st_session_state.exam_submitted = False
+    st_session_state.exam_questions = []
+    st_session_state.user_answers = {}
+    st_session_state.bookmarked_indices = set()
+    st_session_state.current_q_idx = 0
+    st_session_state.start_time = 0
+    st_session_state.time_spent = 0
+    st_session_state.exam_result = None
+    st_session_state.confirm_submit = False
+    st_session_state.confirm_abandon = False
+
 def get_remaining_seconds(st_session_state):
     if not st_session_state.exam_active or st_session_state.exam_submitted:
         return 0

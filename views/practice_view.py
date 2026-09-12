@@ -19,7 +19,7 @@ def render_practice_view():
     categories = db.get_all_categories(subject=subject)
     cat_names = ["ทั้งหมด"] + [c[0] for c in categories]
     
-    col1, col2 = st.columns([2, 1])
+    col1, col2, col3 = st.columns([2, 1, 1])
     with col1:
         selected_cat = st.selectbox(
             "📂 เลือกหมวดหมู่ที่ต้องการฝึกทำ:",
@@ -30,7 +30,16 @@ def render_practice_view():
     with col2:
         st.write("")
         st.write("")
-        shuffle_choices_opt = st.checkbox("🔀 สลับตำแหน่งตัวเลือก (ก-ง)", value=st.session_state.get('shuffle_options', True))
+        shuffle_choices_opt = st.checkbox("🔀 สลับตัวเลือก (ก-ง)", value=st.session_state.get('shuffle_options', True))
+    with col3:
+        st.write("")
+        st.write("")
+        if st.button("🔄 เริ่มหมวดนี้ใหม่", use_container_width=True, help="ล้างข้อที่ทำค้างไว้และเริ่มข้อที่ 1 ใหม่โดยไม่กระทบสถิติ"):
+            st.session_state.practice_q_idx = 0
+            st.session_state.practice_show_answer = False
+            raw_qs = db.get_all_questions(category=selected_cat if selected_cat != "ทั้งหมด" else None, subject=subject)
+            st.session_state.practice_loaded_qs = quiz_engine.shuffle_questions_list(raw_qs) if shuffle_choices_opt else raw_qs
+            st.rerun()
         
     # Check if category changed to reload questions
     current_cat_state = st.session_state.get('practice_current_cat', None)
