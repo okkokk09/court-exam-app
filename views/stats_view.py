@@ -3,6 +3,9 @@ import streamlit as st
 import db
 
 def render_stats_view():
+    cur_subj = st.session_state.get('selected_subject', 'law')
+    is_com = (cur_subj == 'computer')
+    
     st.markdown('''
     <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%); padding: 24px 28px; border-radius: 16px; color: white; margin-bottom: 24px; border: 1px solid #64748b;">
         <h2 style="margin: 0 0 8px 0; color: #ffffff;">📊 แดชบอร์ดสถิติ & วิเคราะห์จุดอ่อน (Analytics & Weak Areas)</h2>
@@ -12,21 +15,38 @@ def render_stats_view():
     </div>
     ''', unsafe_allow_html=True)
     
-    # 3 View Tabs: Law, Computer, Comparison
-    tab_law, tab_com, tab_compare = st.tabs([
-        "⚖️ สถิติวิชากฎหมายศาลยุติธรรม",
-        "💻 สถิติวิชาคอมพิวเตอร์และสารสนเทศ",
-        "📊 เปรียบเทียบสถิติทั้ง 2 วิชา (Side-by-Side)"
-    ])
+    # Subject Switcher for Dashboard
+    st.markdown("<p style='font-size: 1rem; font-weight: 700; color: #1e3a8a; margin-bottom: 8px;'>🎯 เลือกดูสถิติรายวิชา:</p>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns([1.5, 1.5, 1.5])
+    with c1:
+        law_type = "primary" if not is_com and st.session_state.get('stats_view_mode', 'subject') == 'subject' else "secondary"
+        if st.button("⚖️ สถิติวิชากฎหมายศาล", type=law_type, use_container_width=True, key="stats_btn_law"):
+            st.session_state.selected_subject = 'law'
+            st.session_state.stats_view_mode = 'subject'
+            st.rerun()
+    with c2:
+        com_type = "primary" if is_com and st.session_state.get('stats_view_mode', 'subject') == 'subject' else "secondary"
+        if st.button("💻 สถิติวิชาคอมพิวเตอร์", type=com_type, use_container_width=True, key="stats_btn_com"):
+            st.session_state.selected_subject = 'computer'
+            st.session_state.stats_view_mode = 'subject'
+            st.rerun()
+    with c3:
+        is_cmp = st.session_state.get('stats_view_mode', 'subject') == 'compare'
+        cmp_type = "primary" if is_cmp else "secondary"
+        if st.button("📊 เปรียบเทียบ 2 วิชา", type=cmp_type, use_container_width=True, key="stats_btn_cmp"):
+            st.session_state.stats_view_mode = 'compare'
+            st.rerun()
+
+    st.write("")
     
-    with tab_law:
-        render_subject_dashboard('law', '⚖️ วิชากฎหมายศาลยุติธรรม', '#1e40af')
-        
-    with tab_com:
-        render_subject_dashboard('computer', '💻 วิชาคอมพิวเตอร์และเทคโนโลยีสารสนเทศ', '#0284c7')
-        
-    with tab_compare:
+    view_mode = st.session_state.get('stats_view_mode', 'subject')
+    if view_mode == 'compare':
         render_comparison_dashboard()
+    else:
+        if is_com:
+            render_subject_dashboard('computer', '💻 วิชาคอมพิวเตอร์และเทคโนโลยีสารสนเทศ', '#0284c7')
+        else:
+            render_subject_dashboard('law', '⚖️ วิชากฎหมายศาลยุติธรรม', '#1e40af')
 
 def render_subject_dashboard(subj_key, subj_name, primary_color):
     stats = db.get_dashboard_stats(subject=subj_key)

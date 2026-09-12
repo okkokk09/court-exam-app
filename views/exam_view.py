@@ -18,32 +18,61 @@ def render_exam_lobby():
     subject = st.session_state.get('selected_subject', 'law')
     is_com = (subject == 'computer')
     
-    lobby_title = "💻 โหมดจำลองทำข้อสอบเสมือนจริง (วิชาคอมพิวเตอร์และสารสนเทศ)" if is_com else "🏛️ โหมดจำลองทำข้อสอบเสมือนจริง (วิชากฎหมายศาลยุติธรรม)"
+    # 1. Subject Selector Bar right at the top
+    st.markdown("<p style='font-size: 1.05rem; font-weight: 700; color: #1e3a8a; margin-bottom: 8px;'>🎯 เลือกวิชาที่ต้องการจำลองสอบ & ดูสถิติ:</p>", unsafe_allow_html=True)
+    sel_c1, sel_c2 = st.columns(2)
+    law_q_count = len(db.get_all_questions(subject='law'))
+    com_q_count = len(db.get_all_questions(subject='computer'))
+    
+    with sel_c1:
+        law_btn_type = "primary" if not is_com else "secondary"
+        if st.button(f"⚖️ วิชากฎหมายศาลยุติธรรม ({law_q_count} ข้อ)", type=law_btn_type, use_container_width=True, key="lobby_btn_law"):
+            if st.session_state.selected_subject != 'law':
+                st.session_state.selected_subject = 'law'
+                st.rerun()
+    with sel_c2:
+        com_btn_type = "primary" if is_com else "secondary"
+        if st.button(f"💻 วิชาคอมพิวเตอร์และสารสนเทศ ({com_q_count} ข้อ)", type=com_btn_type, use_container_width=True, key="lobby_btn_com"):
+            if st.session_state.selected_subject != 'computer':
+                st.session_state.selected_subject = 'computer'
+                st.rerun()
+
+    st.write("")
+    
+    # Re-check subject after possible switch
+    subject = st.session_state.get('selected_subject', 'law')
+    is_com = (subject == 'computer')
+    
+    lobby_title = "💻 โหมดจำลองทำข้อสอบเสมือนจริง: วิชาคอมพิวเตอร์และสารสนเทศ" if is_com else "🏛️ โหมดจำลองทำข้อสอบเสมือนจริง: วิชากฎหมายศาลยุติธรรม"
     lobby_desc = (
-        "ฝึกทำข้อสอบปรนัยความรู้ความสามารถด้านคอมพิวเตอร์และเทคโนโลยีสารสนเทศ ฮาร์ดแวร์ ซอฟต์แวร์ MS Office เครือข่าย ความปลอดภัยไซเบอร์ พ.ร.บ.คอมฯ และ AI สุ่ม 50 ข้อ จับเวลา 60 นาที"
+        "ฝึกทำข้อสอบปรนัยความรู้ความสามารถด้านคอมพิวเตอร์และเทคโนโลยีสารสนเทศ ฮาร์ดแวร์ ซอฟต์แวร์ MS Office เครือข่าย ความปลอดภัยไซเบอร์ พ.ร.บ.คอมฯ และ AI"
         if is_com else
-        "ฝึกทำข้อสอบปรนัย กฎหมายระเบียบบริหารราชการศาลยุติธรรม พ.ศ. 2543 (และแก้ไขเพิ่มเติม) ภายใต้สภาวะการสอบจริง สุ่ม 50 ข้อ จับเวลา 60 นาที"
+        "ฝึกทำข้อสอบปรนัย กฎหมายระเบียบบริหารราชการศาลยุติธรรม พ.ศ. 2543 (และแก้ไขเพิ่มเติม) ภายใต้สภาวะการสอบจริง"
     )
     
+    banner_bg = 'linear-gradient(135deg, #0f172a 0%, #0369a1 100%)' if is_com else 'linear-gradient(135deg, #0b2239 0%, #1e3a8a 100%)'
+    banner_border = '#38bdf8' if is_com else '#d4af37'
+    
     st.markdown(f'''
-    <div style="background: linear-gradient(135deg, #0b2239 0%, #1e3a8a 100%); padding: 28px; border-radius: 16px; color: white; margin-bottom: 24px; border: 1px solid #d4af37;">
-        <h2 style="margin: 0 0 10px 0; color: #f8fafc;">{lobby_title}</h2>
-        <p style="margin: 0; color: #cbd5e1; font-size: 1.05rem;">
+    <div style="background: {banner_bg}; padding: 24px 28px; border-radius: 16px; color: white; margin-bottom: 24px; border: 1px solid {banner_border};">
+        <h2 style="margin: 0 0 8px 0; color: #f8fafc;">{lobby_title}</h2>
+        <p style="margin: 0; color: #cbd5e1; font-size: 1rem;">
             {lobby_desc}
         </p>
     </div>
     ''', unsafe_allow_html=True)
     
-    col1, col2 = st.columns([2, 1])
+    col1, col2 = st.columns([2, 1.2])
     
     with col1:
         st.subheader("📋 กติกาและการจำลองสอบ")
-        subject_name = "วิชาคอมพิวเตอร์และเทคโนโลยีสารสนเทศ" if is_com else "คลังข้อสอบกฎหมายศาลยุติธรรม"
+        subject_name = "วิชาคอมพิวเตอร์และเทคโนโลยีสารสนเทศ" if is_com else "คลังข้อสอบกฎหมายระเบียบบริหารศาลฯ"
+        available_q = len(db.get_all_questions(subject=subject))
+        
         st.markdown(f'''
-        - **วิชาที่สอบ:** **{subject_name}**
-        - **จำนวนข้อสอบ:** สุ่ม 50 ข้อ
-        - **เวลาในการทำ:** 60 นาที (1 ชั่วโมงเต็ม)
-        - **เกณฑ์ผ่าน:** ได้คะแนน 60% ขึ้นไป (30/50 คะแนน)
+        - **วิชาที่กำลังจะสอบ:** **{subject_name}**
+        - **จำนวนข้อสอบในคลัง:** {available_q} ข้อ
+        - **เกณฑ์ผ่าน:** ได้คะแนน 60% ขึ้นไป
         - **การสลับตัวเลือก:** 🔀 **สลับตำแหน่งตัวเลือก (ก, ข, ค, ง) อัตโนมัติทุกครั้ง** เพื่อป้องกันการท่องจำตำแหน่ง
         - **ระบบนำทาง:** สามารถข้ามข้อ ย้อนกลับ ปักหมุดข้อที่ลังเล และตรวจเช็กข้อที่ยังไม่ได้ทำได้ตลอดเวลา
         - **การบันทึกสถิติ:** ข้อที่ตอบผิดจะถูกบันทึกลงฐานข้อมูล SQLite โดยอัตโนมัติ เพื่อนำไปฝึกซ้ำใน **"โหมดทบทวนข้อผิดซ้ำ"**
@@ -51,92 +80,62 @@ def render_exam_lobby():
         
         c_a, c_b = st.columns(2)
         with c_a:
-            q_count = st.selectbox("🎯 จำนวนข้อสอบที่ต้องการทำ:", [50, 40, 30, 20, 10], index=0)
+            default_count_opts = [c for c in [50, 40, 30, 20, 10] if c <= available_q] or [available_q]
+            q_count = st.selectbox("🎯 จำนวนข้อสอบที่ต้องการทำ:", default_count_opts, index=0)
         with c_b:
             duration_opt = st.selectbox("⏱️ เวลาในการทำข้อสอบ:", [60, 45, 30, 20, 15], index=0, format_func=lambda x: f"{x} นาที")
             
         st.write("")
-        if st.button("🚀 เริ่มทำข้อสอบทันที", type="primary", use_container_width=True):
+        btn_label = f"🚀 เริ่มทำข้อสอบวิชา{'คอมพิวเตอร์' if is_com else 'กฎหมาย'} ({q_count} ข้อ / {duration_opt} นาที)"
+        if st.button(btn_label, type="primary", use_container_width=True):
             quiz_engine.start_simulation_exam(st.session_state, count=q_count, duration_minutes=duration_opt, subject=subject)
             st.rerun()
 
     with col2:
-        st.markdown("**📊 สถิติแยกตามรายวิชา (ไม่รวมผลกัน):**")
+        st.markdown(f"**📊 สถิติเฉพาะวิชาที่เลือก ({'คอมพิวเตอร์' if is_com else 'กฎหมายศาล'}):**")
         
-        # Tabs to view each subject's statistics completely independently
-        sub_tab1, sub_tab2 = st.tabs(["⚖️ กฎหมายศาล", "💻 คอมพิวเตอร์"])
+        current_stats = db.get_dashboard_stats(subject=subject)
+        active_color = '#0284c7' if is_com else '#1e40af'
         
-        # 1. Law Subject Tab
-        with sub_tab1:
-            law_stats = db.get_dashboard_stats(subject='law')
-            law_q_count = len(db.get_all_questions(subject='law'))
-            st.markdown(f'''
-            <div style="background: #ffffff; border: 2px solid {'#1e40af' if not is_com else '#e2e8f0'}; border-radius: 12px; padding: 14px; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
-                <div style="font-weight: 700; color: #1e3a8a; font-size: 0.92rem; margin-bottom: 8px;">
-                    ⚖️ กฎหมายระเบียบบริหารศาลฯ {'(กำลังเลือก)' if not is_com else ''}
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem;">
-                    <span style="color: #64748b;">คลังข้อสอบวิชานี้:</span>
-                    <b style="color: #1e40af;">{law_q_count} ข้อ</b>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem;">
-                    <span style="color: #64748b;">สอบไปแล้วทั้งหมด:</span>
-                    <b style="color: #047857;">{law_stats['total_exams']} ครั้ง</b>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem;">
-                    <span style="color: #64748b;">คะแนนเฉลี่ยที่ผ่านมา:</span>
-                    <b style="color: #d97706;">{law_stats['avg_score']}%</b>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem;">
-                    <span style="color: #64748b;">ข้อผิดค้างทบทวน:</span>
-                    <b style="color: #dc2626;">{law_stats['mistake_count']} ข้อ</b>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-                    <span style="color: #64748b;">ความแม่นยำวิชานี้:</span>
-                    <b style="color: #059669;">{law_stats['overall_accuracy']}%</b>
-                </div>
+        st.markdown(f'''
+        <div style="background: #ffffff; border: 2px solid {active_color}; border-radius: 14px; padding: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+                <span style="font-weight: 700; color: {active_color}; font-size: 0.95rem;">
+                    {'💻 คอมพิวเตอร์และสารสนเทศ' if is_com else '⚖️ กฎหมายระเบียบบริหารศาลฯ'}
+                </span>
+                <span style="background: {'#e0f2fe' if is_com else '#eff6ff'}; color: {active_color}; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 12px;">
+                    กำลังเลือก
+                </span>
             </div>
-            ''', unsafe_allow_html=True)
-            if is_com:
-                if st.button("สลับมาทำวิชากฎหมาย ⚖️", key="lobby_sw_law", use_container_width=True):
-                    st.session_state.selected_subject = 'law'
-                    st.rerun()
-                    
-        # 2. Computer Subject Tab
-        with sub_tab2:
-            com_stats = db.get_dashboard_stats(subject='computer')
-            com_q_count = len(db.get_all_questions(subject='computer'))
-            st.markdown(f'''
-            <div style="background: #ffffff; border: 2px solid {'#0284c7' if is_com else '#e2e8f0'}; border-radius: 12px; padding: 14px; margin-bottom: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04);">
-                <div style="font-weight: 700; color: #0284c7; font-size: 0.92rem; margin-bottom: 8px;">
-                    💻 คอมพิวเตอร์และสารสนเทศ {'(กำลังเลือก)' if is_com else ''}
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem;">
-                    <span style="color: #64748b;">คลังข้อสอบวิชานี้:</span>
-                    <b style="color: #0284c7;">{com_q_count} ข้อ</b>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem;">
-                    <span style="color: #64748b;">สอบไปแล้วทั้งหมด:</span>
-                    <b style="color: #047857;">{com_stats['total_exams']} ครั้ง</b>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem;">
-                    <span style="color: #64748b;">คะแนนเฉลี่ยที่ผ่านมา:</span>
-                    <b style="color: #d97706;">{com_stats['avg_score']}%</b>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.85rem;">
-                    <span style="color: #64748b;">ข้อผิดค้างทบทวน:</span>
-                    <b style="color: #dc2626;">{com_stats['mistake_count']} ข้อ</b>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-                    <span style="color: #64748b;">ความแม่นยำวิชานี้:</span>
-                    <b style="color: #059669;">{com_stats['overall_accuracy']}%</b>
-                </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
+                <span style="color: #64748b;">คลังข้อสอบวิชานี้:</span>
+                <b style="color: {active_color}; font-size: 0.95rem;">{available_q} ข้อ</b>
             </div>
-            ''', unsafe_allow_html=True)
-            if not is_com:
-                if st.button("สลับมาทำวิชาคอมพิวเตอร์ 💻", key="lobby_sw_com", use_container_width=True):
-                    st.session_state.selected_subject = 'computer'
-                    st.rerun()
+            <div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
+                <span style="color: #64748b;">สอบไปแล้วทั้งหมด:</span>
+                <b style="color: #047857; font-size: 0.95rem;">{current_stats['total_exams']} ครั้ง</b>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
+                <span style="color: #64748b;">คะแนนเฉลี่ยที่ผ่านมา:</span>
+                <b style="color: #d97706; font-size: 0.95rem;">{current_stats['avg_score']}%</b>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
+                <span style="color: #64748b;">ข้อผิดค้างทบทวน:</span>
+                <b style="color: #dc2626; font-size: 0.95rem;">{current_stats['mistake_count']} ข้อ</b>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.88rem;">
+                <span style="color: #64748b;">ความแม่นยำวิชานี้:</span>
+                <b style="color: #059669; font-size: 0.95rem;">{current_stats['overall_accuracy']}%</b>
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+        # Quick Switch or Peek at the other subject
+        other_subject = 'law' if is_com else 'computer'
+        other_label = '⚖️ สลับไปดู/สอบวิชากฎหมาย' if is_com else '💻 สลับไปดู/สอบวิชาคอมพิวเตอร์'
+        if st.button(other_label, key="lobby_sw_other", use_container_width=True):
+            st.session_state.selected_subject = other_subject
+            st.rerun()
 
 def render_exam_in_progress():
     questions = st.session_state.exam_questions
