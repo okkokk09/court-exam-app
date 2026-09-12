@@ -214,11 +214,12 @@ def render_practice_view():
             ans_info = practice_answers.get(i, None)
             is_q_bm = questions[i]['id'] in bookmarks
             
-            label = f"{i+1}"
             if is_q_bm:
-                label += "🚩"
+                label = f"{i+1}🚩"
             elif ans_info is not None:
-                label += "✅" if ans_info['is_correct'] else "❌"
+                label = f"{i+1}✅" if ans_info['is_correct'] else f"{i+1}❌"
+            else:
+                label = f"{i+1}⚪"
                 
             btn_type = "primary" if is_cur else "secondary"
             if col_target.button(label, key=f"prac_nav_{i}", type=btn_type, use_container_width=True):

@@ -225,31 +225,39 @@ def render_exam_in_progress():
 
     # Question Navigator Grid Sidebar
     with col_sidebar:
-        st.markdown("<h4 style='margin: 0 0 10px 0;'>📌 แผงนำทางข้อสอบ</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='margin: 0 0 8px 0;'>📌 แผงนำทางข้อสอบ</h4>", unsafe_allow_html=True)
         
         # Legend
         st.markdown('''
-        <div style="font-size: 0.78rem; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-            <span>🔵 กำลังทำ</span>
-            <span>🟢 ตอบแล้ว</span>
-            <span>⚪ ยังไม่ตอบ</span>
-            <span>🚩 ปักหมุด</span>
+        <div style="font-size: 0.8rem; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; background: rgba(0,0,0,0.04); padding: 8px 12px; border-radius: 8px;">
+            <span>🔵 <b>กำลังทำ</b></span>
+            <span>🟢 <b>ตอบแล้ว</b></span>
+            <span>⚪ <b>ยังไม่ตอบ</b></span>
+            <span>🚩 <b>ปักหมุด</b></span>
         </div>
         ''', unsafe_allow_html=True)
         
         # Draw 5-column button grid
         grid_cols = st.columns(5)
+        unanswered_list = []
+        
         for i in range(total_q):
             col_target = grid_cols[i % 5]
             is_cur = (i == current_idx)
             is_ans = i in st.session_state.user_answers
             is_bm = i in st.session_state.bookmarked_indices
             
-            label = f"{i+1}"
-            if is_bm:
-                label += "🚩"
+            if not is_ans and not is_cur:
+                unanswered_list.append(i + 1)
                 
-            btn_type = "primary" if is_cur else ("secondary")
+            if is_bm:
+                label = f"{i+1}🚩"
+            elif is_ans:
+                label = f"{i+1}🟢"
+            else:
+                label = f"{i+1}⚪"
+                
+            btn_type = "primary" if is_cur else "secondary"
             
             if col_target.button(label, key=f"nav_btn_{i}", type=btn_type, use_container_width=True):
                 st.session_state.current_q_idx = i
@@ -258,9 +266,14 @@ def render_exam_in_progress():
         st.write("---")
         unanswered = total_q - len(st.session_state.user_answers)
         if unanswered > 0:
-            st.info(f"ยังไม่ได้ตอบอีก {unanswered} ข้อ")
+            st.warning(f"⚠️ **ยังไม่ได้ตอบอีก {unanswered} ข้อ**")
+            if unanswered_list:
+                first_unans = unanswered_list[0] - 1
+                if st.button(f"⚡ ข้ามไปทำข้อ {first_unans + 1} (ข้อว่างแรก)", use_container_width=True, help="กระโดดไปยังข้อที่ยังไม่ได้ตอบทันที"):
+                    st.session_state.current_q_idx = first_unans
+                    st.rerun()
         else:
-            st.success("ตอบครบทุกข้อแล้ว!")
+            st.success("🎉 ตอบครบทุกข้อแล้ว!")
             
         if st.button("✅ ส่งข้อสอบเพื่อตรวจผล", type="primary", use_container_width=True):
             st.session_state.confirm_submit = True

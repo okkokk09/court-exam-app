@@ -217,11 +217,10 @@ def render_interactive_review(questions):
         for i in range(total):
             col_target = grid_cols[i % 5]
             is_cur = (i == idx)
-            ans_info = review_answers.get(i, None)
-            
-            label = f"{i+1}"
             if ans_info is not None:
-                label += "✅" if ans_info['is_correct'] else "❌"
+                label = f"{i+1}✅" if ans_info['is_correct'] else f"{i+1}❌"
+            else:
+                label = f"{i+1}⚪"
                 
             btn_type = "primary" if is_cur else "secondary"
             if col_target.button(label, key=f"rev_nav_{i}", type=btn_type, use_container_width=True):
