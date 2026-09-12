@@ -92,5 +92,21 @@ class TestQuizApp(unittest.TestCase):
         self.assertEqual(result['percentage'], 60.0)
         self.assertTrue(result['passed'])
 
+    def test_shuffle_question_options(self):
+        sample_q = {
+            'id': 'TEST_01',
+            'question': 'Sample Question?',
+            'options': ['Choice A', 'Choice B', 'Choice C', 'Choice D'],
+            'answer_index': 1 # Choice B
+        }
+        
+        # Test 50 iterations to ensure correct text is always tracked
+        for _ in range(50):
+            shuffled = quiz_engine.shuffle_question_options(sample_q)
+            new_idx = shuffled['answer_index']
+            self.assertEqual(shuffled['options'][new_idx], 'Choice B', 'Shuffled answer_index must always point to correct choice text')
+            self.assertEqual(len(shuffled['options']), 4)
+            self.assertEqual(set(shuffled['options']), set(sample_q['options']))
+
 if __name__ == '__main__':
     unittest.main()

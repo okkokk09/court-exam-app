@@ -34,7 +34,20 @@ def render_review_view():
         limit_count = st.number_input("จำนวนข้อที่ต้องการดึง:", min_value=5, max_value=100, value=20, step=5)
         
     subject = st.session_state.get('selected_subject', 'law')
-    mistake_questions = db.get_mistake_questions(limit=limit_count, filter_type=filter_type, subject=subject)
+    
+    # Reload & shuffle mistake questions if filter/subject changes
+    review_state_key = (filter_type, limit_count, subject)
+    if st.session_state.get('review_current_state') != review_state_key or 'review_loaded_qs' not in st.session_state:
+        raw_mistakes = db.get_mistake_questions(limit=limit_count, filter_type=filter_type, subject=subject)
+        if st.session_state.get('shuffle_options', True):
+            st.session_state.review_loaded_qs = quiz_engine.shuffle_questions_list(raw_mistakes)
+        else:
+            st.session_state.review_loaded_qs = raw_mistakes
+        st.session_state.review_current_state = review_state_key
+        st.session_state.review_q_idx = 0
+        st.session_state.review_show_answer = False
+        
+    mistake_questions = st.session_state.get('review_loaded_qs', [])
     
     if not mistake_questions:
         st.info("🎉 ยอดเยี่ยมมาก! ยังไม่มีรายการข้อสอบที่ตอบผิดในวิชานี้ หรือคุณได้ฝึกซ้ำจนครบแล้ว (ไปลองทำโหมดจำลองสอบเพื่อเริ่มเก็บสถิติ)")
@@ -43,7 +56,7 @@ def render_review_view():
             st.rerun()
         return
         
-    st.write(f"พบข้อสอบที่เคยตอบผิด **{len(mistake_questions)}** ข้อ")
+    st.write(f"พบข้อสอบที่เคยตอบผิด **{len(mistake_questions)}** ข้อ (🔀 สลับตำแหน่งตัวเลือกแล้ว)")
     
     # Sub-tabs for Review View
     tab1, tab2 = st.tabs(["📝 ฝึกทำซ้ำทีละข้อ (Interactive Re-test)", "📑 บัตรคำช่วยจำ & สรุปข้อผิด (Flashcards)"])

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
 import db
+import quiz_engine
 import styles
 
 def render_practice_view():
@@ -8,7 +9,7 @@ def render_practice_view():
     <div style="background: linear-gradient(135deg, #065f46 0%, #047857 50%, #059669 100%); padding: 24px 28px; border-radius: 16px; color: white; margin-bottom: 24px; border: 1px solid #34d399;">
         <h2 style="margin: 0 0 8px 0; color: #ffffff;">📚 โหมดฝึกทำแยกหมวดหมู่ (Topic Practice)</h2>
         <p style="margin: 0; color: #d1fae5; font-size: 1rem;">
-            ฝึกทำข้อสอบเจาะลึกเฉพาะหมวดหมู่ที่ต้องการ เฉลยละเอียดทันทีหลังกดตอบเพื่อความเข้าใจที่แม่นยำ
+            ฝึกทำข้อสอบเจาะลึกเฉพาะหมวดหมู่ที่ต้องการ สลับตำแหน่งตัวเลือกอัตโนมัติป้องกันการจำตำแหน่ง
         </p>
     </div>
     ''', unsafe_allow_html=True)
@@ -28,11 +29,24 @@ def render_practice_view():
     with col2:
         st.write("")
         st.write("")
-        shuffle_opt = st.checkbox("สุ่มลำดับข้อสอบ", value=True)
+        shuffle_choices_opt = st.checkbox("🔀 สลับตำแหน่งตัวเลือก (ก-ง)", value=st.session_state.get('shuffle_options', True))
         
-    questions = db.get_all_questions(category=selected_cat if selected_cat != "ทั้งหมด" else None, subject=subject)
-    if shuffle_opt:
-        pass
+    # Check if category changed to reload questions
+    current_cat_state = st.session_state.get('practice_current_cat', None)
+    current_subj_state = st.session_state.get('practice_current_subj', None)
+    
+    if current_cat_state != selected_cat or current_subj_state != subject or 'practice_loaded_qs' not in st.session_state:
+        raw_qs = db.get_all_questions(category=selected_cat if selected_cat != "ทั้งหมด" else None, subject=subject)
+        if shuffle_choices_opt:
+            st.session_state.practice_loaded_qs = quiz_engine.shuffle_questions_list(raw_qs)
+        else:
+            st.session_state.practice_loaded_qs = raw_qs
+        st.session_state.practice_current_cat = selected_cat
+        st.session_state.practice_current_subj = subject
+        st.session_state.practice_q_idx = 0
+        st.session_state.practice_show_answer = False
+        
+    questions = st.session_state.get('practice_loaded_qs', [])
         
     if not questions:
         st.warning("ไม่พบข้อสอบในหมวดหมู่นี้")

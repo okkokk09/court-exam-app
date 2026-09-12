@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
+import random
 import db
 
 def init_session_state(st_session_state):
@@ -28,11 +29,41 @@ def init_session_state(st_session_state):
         'review_show_answer': False,
         'selected_theme': 'court_navy',
         'selected_subject': 'law', # 'law' or 'computer'
+        'shuffle_options': True, # Shuffle choices to prevent position memorization
     }
     
     for key, val in defaults.items():
         if key not in st_session_state:
             st_session_state[key] = val
+
+def shuffle_question_options(question_dict):
+    '''
+    Randomizes / shuffles the 4 options of a question dictionary while accurately 
+    updating the answer_index to point to the new shuffled position of the correct answer.
+    '''
+    if not question_dict or 'options' not in question_dict or not question_dict['options']:
+        return question_dict
+        
+    q = dict(question_dict)
+    options = list(q['options'])
+    correct_idx = q.get('answer_index', 0)
+    
+    if correct_idx >= len(options):
+        correct_idx = 0
+        
+    correct_text = options[correct_idx]
+    
+    # Shuffle options randomly
+    random.shuffle(options)
+    
+    # Update answer_index to point to new position
+    q['options'] = options
+    q['answer_index'] = options.index(correct_text)
+    return q
+
+def shuffle_questions_list(questions_list):
+    '''Shuffles options for every question in a list of questions'''
+    return [shuffle_question_options(q) for q in questions_list]
 
 def start_simulation_exam(st_session_state, count=50, duration_minutes=60, category=None, subject=None):
     if not subject:
@@ -41,6 +72,10 @@ def start_simulation_exam(st_session_state, count=50, duration_minutes=60, categ
     if len(questions) < count:
         # If category has fewer, take all available
         pass
+        
+    # Shuffle choices if option is enabled
+    if st_session_state.get('shuffle_options', True):
+        questions = shuffle_questions_list(questions)
         
     st_session_state.exam_active = True
     st_session_state.exam_submitted = False
@@ -60,6 +95,10 @@ def start_review_exam(st_session_state, limit=50, filter_type='frequent_mistakes
     questions = db.get_mistake_questions(limit=limit, filter_type=filter_type, subject=subject)
     if not questions:
         return False
+        
+    # Shuffle choices if option is enabled
+    if st_session_state.get('shuffle_options', True):
+        questions = shuffle_questions_list(questions)
         
     st_session_state.exam_active = True
     st_session_state.exam_submitted = False

@@ -173,6 +173,21 @@ with st.sidebar:
         
     st.write("---")
     
+    # Choice Randomizer Widget
+    st.markdown("**🔀 สลับตำแหน่งตัวเลือก (Choice Randomizer):**")
+    cur_shuffle = st.session_state.get('shuffle_options', True)
+    new_shuffle = st.toggle(
+        "สลับตัวเลือก (ก-ง) ทุกครั้ง",
+        value=cur_shuffle,
+        key="shuffle_choices_sidebar_toggle",
+        help="สุ่มสลับตำแหน่งตัวเลือก ก, ข, ค, ง ทุกครั้งที่เริ่มทำข้อสอบ เพื่อป้องกันการท่องจำตำแหน่ง"
+    )
+    if new_shuffle != cur_shuffle:
+        st.session_state.shuffle_options = new_shuffle
+        st.rerun()
+        
+    st.write("---")
+    
     # Sidebar Quick Stats Widget (Filtered by active subject)
     db_stats = db.get_dashboard_stats(subject=cur_subject)
     st.markdown(f'''
