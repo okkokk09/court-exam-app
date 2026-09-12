@@ -2,6 +2,7 @@
 import streamlit as st
 import db
 import quiz_engine
+import legal_engine
 import styles
 
 def render_practice_view():
@@ -144,3 +145,6 @@ def render_practice_view():
             <b>เหตุผลและคำอธิบาย:</b> {q.get('explanation', '')}
         </div>
         ''', unsafe_allow_html=True)
+        
+        # Legal References & Precedents Engine
+        legal_engine.render_legal_reference_expander(q, expanded=True)

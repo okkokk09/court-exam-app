@@ -2,6 +2,7 @@
 import streamlit as st
 import db
 import quiz_engine
+import legal_engine
 import styles
 
 def render_review_view():
@@ -155,6 +156,9 @@ def render_interactive_review(questions):
             <b>เหตุผลและคำอธิบาย:</b> {q.get('explanation', '')}
         </div>
         ''', unsafe_allow_html=True)
+        
+        # Legal References & Precedents Engine
+        legal_engine.render_legal_reference_expander(q, expanded=True)
 
 def render_flashcards_view(questions):
     st.markdown("คลิกที่แต่ละข้อเพื่อเปิดดูเฉลย คำอธิบาย และมาตรากฎหมายอ้างอิง")
@@ -177,3 +181,6 @@ def render_flashcards_view(questions):
                 <b>คำอธิบาย:</b> {q.get('explanation', '')}
             </div>
             ''', unsafe_allow_html=True)
+            
+            # Legal References & Precedents Engine
+            legal_engine.render_legal_reference_expander(q, expanded=False)

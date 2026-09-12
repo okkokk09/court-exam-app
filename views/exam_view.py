@@ -4,6 +4,7 @@ import time
 import quiz_engine
 import db
 import styles
+import legal_engine
 
 def render_exam_view():
     if not st.session_state.exam_active and not st.session_state.exam_submitted:
@@ -434,3 +435,6 @@ def render_exam_results():
                 <b>คำอธิบายเฉลย:</b> {d.get('explanation', 'ไม่มีคำอธิบายเพิ่มเติม')}
             </div>
             ''', unsafe_allow_html=True)
+            
+            # Legal References & Precedents Engine
+            legal_engine.render_legal_reference_expander(d, expanded=False)
