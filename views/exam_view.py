@@ -18,31 +18,6 @@ def render_exam_lobby():
     subject = st.session_state.get('selected_subject', 'law')
     is_com = (subject == 'computer')
     
-    # 1. Subject Selector Bar right at the top
-    st.markdown("<p style='font-size: 1.05rem; font-weight: 700; color: #1e3a8a; margin-bottom: 8px;'>🎯 เลือกวิชาที่ต้องการจำลองสอบ & ดูสถิติ:</p>", unsafe_allow_html=True)
-    sel_c1, sel_c2 = st.columns(2)
-    law_q_count = len(db.get_all_questions(subject='law'))
-    com_q_count = len(db.get_all_questions(subject='computer'))
-    
-    with sel_c1:
-        law_btn_type = "primary" if not is_com else "secondary"
-        if st.button(f"⚖️ วิชากฎหมายศาลยุติธรรม ({law_q_count} ข้อ)", type=law_btn_type, use_container_width=True, key="lobby_btn_law"):
-            if st.session_state.selected_subject != 'law':
-                st.session_state.selected_subject = 'law'
-                st.rerun()
-    with sel_c2:
-        com_btn_type = "primary" if is_com else "secondary"
-        if st.button(f"💻 วิชาคอมพิวเตอร์และสารสนเทศ ({com_q_count} ข้อ)", type=com_btn_type, use_container_width=True, key="lobby_btn_com"):
-            if st.session_state.selected_subject != 'computer':
-                st.session_state.selected_subject = 'computer'
-                st.rerun()
-
-    st.write("")
-    
-    # Re-check subject after possible switch
-    subject = st.session_state.get('selected_subject', 'law')
-    is_com = (subject == 'computer')
-    
     lobby_title = "💻 โหมดจำลองทำข้อสอบเสมือนจริง: วิชาคอมพิวเตอร์และสารสนเทศ" if is_com else "🏛️ โหมดจำลองทำข้อสอบเสมือนจริง: วิชากฎหมายศาลยุติธรรม"
     lobby_desc = (
         "ฝึกทำข้อสอบปรนัยความรู้ความสามารถด้านคอมพิวเตอร์และเทคโนโลยีสารสนเทศ ฮาร์ดแวร์ ซอฟต์แวร์ MS Office เครือข่าย ความปลอดภัยไซเบอร์ พ.ร.บ.คอมฯ และ AI"
