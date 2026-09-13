@@ -200,7 +200,7 @@ def render_exam_in_progress():
 
         st.write("")
         # Navigation Buttons Row
-        n_c1, n_c2, n_c3, n_c4 = st.columns([1, 1, 1, 1])
+        n_c1, n_c2, n_c3 = st.columns([1, 1, 1])
         with n_c1:
             if st.button("⬅️ ข้อก่อนหน้า", disabled=(current_idx == 0), use_container_width=True):
                 st.session_state.current_q_idx -= 1
@@ -217,11 +217,6 @@ def render_exam_in_progress():
                 else:
                     st.session_state.bookmarked_indices.add(current_idx)
                 st.rerun()
-        with n_c4:
-            if current_idx in st.session_state.user_answers:
-                if st.button("🗑️ ล้างคำตอบ", use_container_width=True):
-                    del st.session_state.user_answers[current_idx]
-                    st.rerun()
 
     # Question Navigator Grid Sidebar
     with col_sidebar:
