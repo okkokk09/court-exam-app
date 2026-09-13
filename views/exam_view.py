@@ -123,7 +123,7 @@ def render_exam_in_progress():
     is_critical = remaining_secs < 300 # Less than 5 mins
     
     # Top Header & Timer Row
-    col_t1, col_t2, col_t3 = st.columns([2.8, 1.2, 1.0])
+    col_t1, col_t2, col_t3 = st.columns([2.2, 1.3, 1.0])
     with col_t1:
         mode_name = "🎯 วนทำซ้ำเฉพาะข้อที่ผิด (Mistake Bank)" if st.session_state.get('exam_mode') == 'mistakes_retest' else ("🔄 โหมดทบทวนข้อผิด" if st.session_state.get('exam_mode') == 'review_test' else "⚖️ โหมดจำลองสอบจริง")
         st.markdown(f'''
@@ -154,7 +154,7 @@ def render_exam_in_progress():
     st.write("")
     
     # Main Exam Workspace: Question Area (left) + Question Navigator Palette (right)
-    col_main, col_sidebar = st.columns([2.8, 1.2])
+    col_main, col_sidebar = st.columns([2.2, 1.3])
     
     with col_main:
         is_bookmarked = current_idx in st.session_state.bookmarked_indices

@@ -78,8 +78,8 @@ def render_practice_view():
         st.session_state.practice_answers = {}
     practice_answers = st.session_state.practice_answers
 
-    # Two-column layout: Left (70%) Question & Choices, Right (30%) Quick Navigator Palette
-    col_main, col_sidebar = st.columns([2.8, 1.2])
+    # Two-column layout: Left Question & Choices, Right Quick Navigator Palette
+    col_main, col_sidebar = st.columns([2.2, 1.3])
 
     with col_main:
         # Header bar

@@ -439,33 +439,51 @@ def get_custom_css(theme_key='court_navy'):
     }}
 
     /* Choice Option Buttons in Practice & Review */
-    div[data-testid="stButton"] > button:has(strong) {{
-        text-align: left !important;
+    div[data-testid="stButton"] > button:has(strong),
+    div[data-testid="stButton"] > button:has(p strong) {{
+        display: flex !important;
         justify-content: flex-start !important;
-        padding: 12px 18px !important;
+        align-items: center !important;
+        text-align: left !important;
+        padding: 14px 20px !important;
         border-radius: 12px !important;
         font-size: 1.05rem !important;
-        line-height: 1.5 !important;
-        border: 1.5px solid {t['radio_label_border']} !important;
-        background-color: {t['card_bg']} !important;
+        line-height: 1.55 !important;
+        border: 2px solid {t['radio_label_border']} !important;
+        background-color: {t['radio_label_bg']} !important;
         box-shadow: none !important;
         transform: none !important;
+        width: 100% !important;
     }}
 
-    div[data-testid="stButton"] > button:has(strong):hover {{
-        border-color: {t['primary_color']} !important;
-        background-color: {t['radio_active_bg']} !important;
+    div[data-testid="stButton"] > button:has(strong):hover,
+    div[data-testid="stButton"] > button:has(p strong):hover {{
+        border-color: {t['radio_hover_border']} !important;
+        background-color: {t['radio_label_bg']} !important;
         transform: none !important;
         box-shadow: none !important;
     }}
 
-    div[data-testid="stButton"] > button:has(strong) p {{
+    div[data-testid="stButton"] > button:has(strong) div,
+    div[data-testid="stButton"] > button:has(p strong) div,
+    div[data-testid="stButton"] > button:has(strong) [data-testid="stMarkdownContainer"],
+    div[data-testid="stButton"] > button:has(p strong) [data-testid="stMarkdownContainer"] {{
+        width: 100% !important;
+        text-align: left !important;
+        display: flex !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
+    }}
+
+    div[data-testid="stButton"] > button:has(strong) p,
+    div[data-testid="stButton"] > button:has(p strong) p {{
         text-align: left !important;
         margin: 0 !important;
         font-size: 1.05rem !important;
         font-weight: 500 !important;
-        line-height: 1.5 !important;
+        line-height: 1.55 !important;
         color: {t['text_color']} !important;
+        width: 100% !important;
     }}
 
     /* Hide Streamlit default hamburger menu & footer */

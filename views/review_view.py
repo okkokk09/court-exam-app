@@ -95,8 +95,8 @@ def render_interactive_review(questions):
         st.session_state.review_answers = {}
     review_answers = st.session_state.review_answers
 
-    # Two-column layout: Left (70%) Question & Choices, Right (30%) Mistake Navigator Palette
-    col_main, col_sidebar = st.columns([2.8, 1.2])
+    # Two-column layout: Left Question & Choices, Right Mistake Navigator Palette
+    col_main, col_sidebar = st.columns([2.2, 1.3])
     
     with col_main:
         # Progress & Stats header
