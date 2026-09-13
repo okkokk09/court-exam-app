@@ -448,20 +448,22 @@ def get_custom_css(theme_key='court_navy'):
         line-height: 1.5 !important;
         border: 1.5px solid {t['radio_label_border']} !important;
         background-color: {t['card_bg']} !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.03) !important;
+        box-shadow: none !important;
+        transform: none !important;
     }}
 
     div[data-testid="stButton"] > button:has(strong):hover {{
         border-color: {t['primary_color']} !important;
         background-color: {t['radio_active_bg']} !important;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 14px rgba(0,0,0,0.08) !important;
+        transform: none !important;
+        box-shadow: none !important;
     }}
 
     div[data-testid="stButton"] > button:has(strong) p {{
         text-align: left !important;
         margin: 0 !important;
         font-size: 1.05rem !important;
+        font-weight: 500 !important;
         line-height: 1.5 !important;
         color: {t['text_color']} !important;
     }}
