@@ -298,6 +298,7 @@ def get_custom_css(theme_key='court_navy'):
         display: flex !important;
         align-items: center !important;
         width: 100% !important;
+        max-width: 640px !important;
         box-sizing: border-box !important;
         transform: none !important;
     }}
@@ -454,6 +455,7 @@ def get_custom_css(theme_key='court_navy'):
         box-shadow: none !important;
         transform: none !important;
         width: 100% !important;
+        max-width: 640px !important;
     }}
 
     div[data-testid="stButton"] > button:has(strong):hover,
@@ -484,6 +486,12 @@ def get_custom_css(theme_key='court_navy'):
         line-height: 1.55 !important;
         color: {t['text_color']} !important;
         width: 100% !important;
+    }}
+
+    /* Constrain feedback alert boxes in choice area */
+    div[data-testid="stAlert"] {{
+        max-width: 640px !important;
+        border-radius: 12px !important;
     }}
 
     /* Hide Streamlit default hamburger menu & footer */
