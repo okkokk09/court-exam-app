@@ -293,26 +293,29 @@ def get_custom_css(theme_key='court_navy'):
         padding: 14px 20px !important;
         margin: 0 !important;
         cursor: pointer !important;
-        transition: all 0.18s ease-in-out !important;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+        transition: border-color 0.15s ease-in-out !important;
+        box-shadow: none !important;
         display: flex !important;
         align-items: center !important;
         width: 100% !important;
+        box-sizing: border-box !important;
+        transform: none !important;
     }}
 
     div[data-testid="stRadio"] div[role="radiogroup"] > label:hover {{
-        background-color: {t['radio_active_bg']} !important;
+        background-color: {t['radio_label_bg']} !important;
         border-color: {t['radio_hover_border']} !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12) !important;
+        transform: none !important;
+        box-shadow: none !important;
     }}
 
     div[data-testid="stRadio"] div[role="radiogroup"] > label[data-checked="true"],
     div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked) {{
-        background-color: {t['radio_active_bg']} !important;
+        background-color: {t['radio_label_bg']} !important;
         border-color: {t['radio_active_border']} !important;
         border-width: 2px !important;
-        box-shadow: 0 0 0 2px {t['radio_active_border']} !important;
+        box-shadow: none !important;
+        transform: none !important;
     }}
 
     /* Enforce clear contrast for text inside choice labels */
@@ -320,15 +323,15 @@ def get_custom_css(theme_key='court_navy'):
     div[data-testid="stRadio"] div[role="radiogroup"] label span,
     div[data-testid="stRadio"] div[role="radiogroup"] label div {{
         color: {t['text_color']} !important;
-        font-size: 1.1rem !important;
+        font-size: 1.05rem !important;
         font-weight: 500 !important;
         line-height: 1.55 !important;
     }}
 
     div[data-testid="stRadio"] div[role="radiogroup"] label[data-checked="true"] p,
     div[data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) p {{
-        color: {t['radio_active_text']} !important;
-        font-weight: 700 !important;
+        color: {t['text_color']} !important;
+        font-weight: 500 !important;
     }}
 
     /* Result Card Hero */
