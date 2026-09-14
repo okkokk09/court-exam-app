@@ -20,41 +20,34 @@ def render_exam_lobby():
     is_full_page = (st.session_state.get('current_page') == 'full_exam')
     
     # 1. Full Exam Simulation Hero Banner & Launch Card (Official Court Exam Standard)
-    st.markdown('''
-    <div style="background: linear-gradient(135deg, #0b2239 0%, #1e3a8a 50%, #1e40af 100%); padding: 26px 30px; border-radius: 18px; color: white; margin-bottom: 24px; border: 2px solid #d4af37; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 2rem;">🏆</span>
-                <div>
-                    <h2 style="margin: 0; color: #fef08a; font-size: 1.6rem; font-weight: 700;">จำลองสอบจริงเต็มรูปแบบ (Full Exam Simulation)</h2>
-                    <p style="margin: 2px 0 0 0; color: #e2e8f0; font-size: 0.95rem;">
-                        จำลองสภาวะสอบเสมือนจริงของสำนักงานศาลยุติธรรม ภาคความรู้ความสามารถเฉพาะตำแหน่ง
-                    </p>
-                </div>
-            </div>
-            <div>
-                <span style="background: rgba(212, 175, 55, 0.25); border: 1.5px solid #d4af37; color: #fef08a; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.85rem;">
-                    💯 200 คะแนนเต็ม | ⏱️ 180 นาที
-                </span>
-            </div>
-        </div>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; background: rgba(0,0,0,0.25); padding: 14px 18px; border-radius: 12px; margin-bottom: 18px; border: 1px solid rgba(255,255,255,0.1);">
-            <div>
-                <span style="color: #93c5fd; font-size: 0.85rem; font-weight: 600;">⚖️ หมวดกฎหมายระเบียบศาลฯ:</span><br>
-                <b style="color: #ffffff; font-size: 1rem;">30 ข้อ (60 คะแนน)</b>
-            </div>
-            <div>
-                <span style="color: #93c5fd; font-size: 0.85rem; font-weight: 600;">💻 หมวดคอมพิวเตอร์และสารสนเทศ:</span><br>
-                <b style="color: #ffffff; font-size: 1rem;">70 ข้อ (140 คะแนน)</b>
-            </div>
-            <div>
-                <span style="color: #93c5fd; font-size: 0.85rem; font-weight: 600;">🎯 เกณฑ์การตัดสินผลสอบ:</span><br>
-                <b style="color: #34d399; font-size: 0.95rem;">ผ่าน 60% (120 คะแนน) | ลุ้น Top 10 (170+ คะแนน)</b>
-            </div>
-        </div>
-    </div>
-    ''', unsafe_allow_html=True)
+    st.markdown('''<div style="background: linear-gradient(135deg, #0b2239 0%, #1e3a8a 50%, #1e40af 100%); padding: 26px 30px; border-radius: 18px; color: white; margin-bottom: 24px; border: 2px solid #d4af37; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
+<div style="display: flex; align-items: center; gap: 10px;">
+<span style="font-size: 2rem;">🏆</span>
+<div>
+<h2 style="margin: 0; color: #fef08a; font-size: 1.6rem; font-weight: 700;">จำลองสอบจริงเต็มรูปแบบ (Full Exam Simulation)</h2>
+<p style="margin: 2px 0 0 0; color: #e2e8f0; font-size: 0.95rem;">จำลองสภาวะสอบเสมือนจริงของสำนักงานศาลยุติธรรม ภาคความรู้ความสามารถเฉพาะตำแหน่ง</p>
+</div>
+</div>
+<div>
+<span style="background: rgba(212, 175, 55, 0.25); border: 1.5px solid #d4af37; color: #fef08a; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.85rem;">💯 200 คะแนนเต็ม | ⏱️ 180 นาที</span>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; background: rgba(0,0,0,0.25); padding: 14px 18px; border-radius: 12px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.1);">
+<div>
+<span style="color: #93c5fd; font-size: 0.85rem; font-weight: 600;">⚖️ หมวดกฎหมายระเบียบศาลฯ:</span><br>
+<b style="color: #ffffff; font-size: 1rem;">30 ข้อ (60 คะแนน)</b>
+</div>
+<div>
+<span style="color: #93c5fd; font-size: 0.85rem; font-weight: 600;">💻 หมวดคอมพิวเตอร์และสารสนเทศ:</span><br>
+<b style="color: #ffffff; font-size: 1rem;">70 ข้อ (140 คะแนน)</b>
+</div>
+<div>
+<span style="color: #93c5fd; font-size: 0.85rem; font-weight: 600;">🎯 เกณฑ์การตัดสินผลสอบ:</span><br>
+<b style="color: #34d399; font-size: 0.95rem;">ผ่าน 60% (120 คะแนน) | ลุ้น Top 10 (170+ คะแนน)</b>
+</div>
+</div>
+</div>''', unsafe_allow_html=True)
     
     # Big CTA for Full Simulation Exam
     if st.button("🚀 เริ่มทำข้อสอบจำลองจริงเต็มรูปแบบ (100 ข้อ / 200 คะแนน / 180 นาที)", type="primary", use_container_width=True, key="btn_start_full_sim_lobby"):
