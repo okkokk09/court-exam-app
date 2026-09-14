@@ -8,29 +8,28 @@ import legal_engine
 
 def render_exam_view():
     if not st.session_state.exam_active and not st.session_state.exam_submitted:
-        render_exam_lobby()
+        is_full_page = (st.session_state.get('current_page') == 'full_exam')
+        if is_full_page:
+            render_full_exam_lobby()
+        else:
+            render_quick_exam_lobby()
     elif st.session_state.exam_active and not st.session_state.exam_submitted:
         render_exam_in_progress()
     elif st.session_state.exam_submitted:
         render_exam_results()
 
-def render_exam_lobby():
-    subject = st.session_state.get('selected_subject', 'law')
-    is_com = (subject == 'computer')
-    is_full_page = (st.session_state.get('current_page') == 'full_exam')
-    
-    # 1. Full Exam Simulation Hero Banner & Launch Card (Official Court Exam Standard)
+def render_full_exam_lobby():
     st.markdown('''<div style="background: linear-gradient(135deg, #0b2239 0%, #1e3a8a 50%, #1e40af 100%); padding: 26px 30px; border-radius: 18px; color: white; margin-bottom: 24px; border: 2px solid #d4af37; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 14px;">
 <div style="display: flex; align-items: center; gap: 10px;">
-<span style="font-size: 2rem;">🏆</span>
+<span style="font-size: 2.2rem;">🏆</span>
 <div>
-<h2 style="margin: 0; color: #fef08a; font-size: 1.6rem; font-weight: 700;">จำลองสอบจริงเต็มรูปแบบ (Full Exam Simulation)</h2>
+<h2 style="margin: 0; color: #fef08a; font-size: 1.7rem; font-weight: 700;">จำลองสอบจริงเต็มรูปแบบ (Full Exam Simulation)</h2>
 <p style="margin: 2px 0 0 0; color: #e2e8f0; font-size: 0.95rem;">จำลองสภาวะสอบเสมือนจริงของสำนักงานศาลยุติธรรม ภาคความรู้ความสามารถเฉพาะตำแหน่ง</p>
 </div>
 </div>
 <div>
-<span style="background: rgba(212, 175, 55, 0.25); border: 1.5px solid #d4af37; color: #fef08a; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.85rem;">💯 200 คะแนนเต็ม | ⏱️ 180 นาที</span>
+<span style="background: rgba(212, 175, 55, 0.25); border: 1.5px solid #d4af37; color: #fef08a; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.9rem;">💯 200 คะแนนเต็ม | ⏱️ 180 นาที</span>
 </div>
 </div>
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; background: rgba(0,0,0,0.25); padding: 14px 18px; border-radius: 12px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.1);">
@@ -48,16 +47,73 @@ def render_exam_lobby():
 </div>
 </div>
 </div>''', unsafe_allow_html=True)
-    
-    # Big CTA for Full Simulation Exam
-    if st.button("🚀 เริ่มทำข้อสอบจำลองจริงเต็มรูปแบบ (100 ข้อ / 200 คะแนน / 180 นาที)", type="primary", use_container_width=True, key="btn_start_full_sim_lobby"):
-        quiz_engine.start_full_simulation_exam(st.session_state, duration_minutes=180)
-        st.rerun()
+
+    col1, col2 = st.columns([2, 1.2])
+    with col1:
+        st.subheader("📋 กติกาและข้อกำหนดการสอบจริงเต็มรูปแบบ")
+        st.markdown('''
+        - **จำนวนข้อสอบ:** **100 ข้อ** (ข้อละ 2 คะแนน รวมเป็น **200 คะแนนเต็ม**)
+        - **โครงสร้างข้อสอบ:** สุ่มผสมกันระหว่าง **วิชากฎหมาย 30 ข้อ** + **วิชาคอมพิวเตอร์ 70 ข้อ**
+        - **เวลาทำข้อสอบ:** **180 นาที (3 ชั่วโมงเต็ม)** มีระบบนับถอยหลัง `HH:MM:SS` และ **Auto-Submit** อัตโนมัติเมื่อหมดเวลา
+        - **การสลับตำแหน่ง:** 🔀 **สุ่มสลับตำแหน่งข้อสอบและตัวเลือก (ก, ข, ค, ง) อัตโนมัติ** ทุกรอบ
+        - **ระบบนำทาง:** สามารถปักหมุดข้อที่ลังเล (🚩) และกระโดดข้ามไปทำข้อที่ว่างได้จากแผงนำทาง 100 ข้อ
+        - **Mistake Bank:** บันทึกข้อที่ตอบผิดลงฐานข้อมูล SQLite เพื่อนำมา **วนทำซ้ำเฉพาะข้อที่ผิด** จนกว่าจะถูกต้อง 100%
+        ''')
         
-    st.write("---")
+        st.write("")
+        if st.button("🚀 เริ่มทำข้อสอบจำลองจริงเต็มรูปแบบ (100 ข้อ / 200 คะแนน / 180 นาที)", type="primary", use_container_width=True, key="btn_start_full_sim_lobby"):
+            quiz_engine.start_full_simulation_exam(st.session_state, duration_minutes=180)
+            st.rerun()
+
+    with col2:
+        st.markdown("**📊 ข้อมูลคลังข้อสอบและสถิติรวม:**")
+        law_all = len(db.get_all_questions(subject='law'))
+        com_all = len(db.get_all_questions(subject='computer'))
+        
+        st.markdown(f'''<div style="background: #ffffff; border: 2px solid #1e40af; border-radius: 14px; padding: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+<span style="font-weight: 700; color: #1e40af; font-size: 0.95rem;">🏛️ คลังข้อสอบสำหรับจัดสอบ</span>
+<span style="background: #eff6ff; color: #1e40af; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 12px;">พร้อมสอบ 100%</span>
+</div>
+<div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
+<span style="color: #64748b;">⚖️ คลังข้อสอบกฎหมาย:</span>
+<b style="color: #1e40af; font-size: 0.95rem;">{law_all} ข้อ (สุ่ม 30 ข้อ)</b>
+</div>
+<div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
+<span style="color: #64748b;">💻 คลังข้อสอบคอมพิวเตอร์:</span>
+<b style="color: #0284c7; font-size: 0.95rem;">{com_all} ข้อ (สุ่ม 70 ข้อ)</b>
+</div>
+<div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
+<span style="color: #64748b;">💯 รวมข้อสอบในชุด:</span>
+<b style="color: #047857; font-size: 0.95rem;">100 ข้อ (200 คะแนน)</b>
+</div>
+<div style="display: flex; justify-content: space-between; font-size: 0.88rem;">
+<span style="color: #64748b;">⏱️ เวลามาตรฐาน:</span>
+<b style="color: #d97706; font-size: 0.95rem;">180 นาที (3 ชม.)</b>
+</div>
+</div>''', unsafe_allow_html=True)
+
+def render_quick_exam_lobby():
+    subject = st.session_state.get('selected_subject', 'law')
+    is_com = (subject == 'computer')
     
-    # 2. Quick Subject Exam Customizer Section
-    st.subheader("🏛️ หรือเลือกจำลองสอบแบบแยกรายวิชา (Quick Subject Exam)")
+    st.markdown(f'''<div style="background: {'linear-gradient(135deg, #0369a1 0%, #0284c7 100%)' if is_com else 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)'}; padding: 20px 24px; border-radius: 14px; color: white; margin-bottom: 20px;">
+<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+<div>
+<h3 style="margin: 0; color: #ffffff; font-size: 1.35rem; font-weight: 700;">
+{'💻 จำลองสอบรายวิชา: คอมพิวเตอร์และเทคโนโลยีสารสนเทศ' if is_com else '⚖️ จำลองสอบรายวิชา: กฎหมายระเบียบบริหารศาลยุติธรรม'}
+</h3>
+<p style="margin: 3px 0 0 0; color: #e2e8f0; font-size: 0.9rem;">
+กำหนดจำนวนข้อและเวลาสอบได้ตามความต้องการ พร้อมจับเวลาและบันทึกสถิติรายวิชา
+</p>
+</div>
+<div>
+<span style="background: rgba(255,255,255,0.2); color: white; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">
+QUICK SUBJECT EXAM
+</span>
+</div>
+</div>
+</div>''', unsafe_allow_html=True)
     
     col1, col2 = st.columns([2, 1.2])
     
@@ -94,38 +150,34 @@ def render_exam_lobby():
         current_stats = db.get_dashboard_stats(subject=subject)
         active_color = '#0284c7' if is_com else '#1e40af'
         
-        st.markdown(f'''
-        <div style="background: #ffffff; border: 2px solid {active_color}; border-radius: 14px; padding: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
-                <span style="font-weight: 700; color: {active_color}; font-size: 0.95rem;">
-                    {'💻 คอมพิวเตอร์และสารสนเทศ' if is_com else '⚖️ กฎหมายระเบียบบริหารศาลฯ'}
-                </span>
-                <span style="background: {'#e0f2fe' if is_com else '#eff6ff'}; color: {active_color}; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 12px;">
-                    กำลังเลือก
-                </span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
-                <span style="color: #64748b;">คลังข้อสอบวิชานี้:</span>
-                <b style="color: {active_color}; font-size: 0.95rem;">{available_q} ข้อ</b>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
-                <span style="color: #64748b;">สอบไปแล้วทั้งหมด:</span>
-                <b style="color: #047857; font-size: 0.95rem;">{current_stats['total_exams']} ครั้ง</b>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
-                <span style="color: #64748b;">คะแนนเฉลี่ยที่ผ่านมา:</span>
-                <b style="color: #d97706; font-size: 0.95rem;">{current_stats['avg_score']}%</b>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
-                <span style="color: #64748b;">ข้อผิดค้างทบทวน:</span>
-                <b style="color: #dc2626; font-size: 0.95rem;">{current_stats['mistake_count']} ข้อ</b>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.88rem;">
-                <span style="color: #64748b;">ความแม่นยำวิชานี้:</span>
-                <b style="color: #059669; font-size: 0.95rem;">{current_stats['overall_accuracy']}%</b>
-            </div>
-        </div>
-        ''', unsafe_allow_html=True)
+        st.markdown(f'''<div style="background: #ffffff; border: 2px solid {active_color}; border-radius: 14px; padding: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+<span style="font-weight: 700; color: {active_color}; font-size: 0.95rem;">
+{'💻 คอมพิวเตอร์และสารสนเทศ' if is_com else '⚖️ กฎหมายระเบียบบริหารศาลฯ'}
+</span>
+<span style="background: {'#e0f2fe' if is_com else '#eff6ff'}; color: {active_color}; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 12px;">กำลังเลือก</span>
+</div>
+<div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
+<span style="color: #64748b;">คลังข้อสอบวิชานี้:</span>
+<b style="color: {active_color}; font-size: 0.95rem;">{available_q} ข้อ</b>
+</div>
+<div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
+<span style="color: #64748b;">สอบไปแล้วทั้งหมด:</span>
+<b style="color: #047857; font-size: 0.95rem;">{current_stats['total_exams']} ครั้ง</b>
+</div>
+<div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
+<span style="color: #64748b;">คะแนนเฉลี่ยที่ผ่านมา:</span>
+<b style="color: #d97706; font-size: 0.95rem;">{current_stats['avg_score']}%</b>
+</div>
+<div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
+<span style="color: #64748b;">ข้อผิดค้างทบทวน:</span>
+<b style="color: #dc2626; font-size: 0.95rem;">{current_stats['mistake_count']} ข้อ</b>
+</div>
+<div style="display: flex; justify-content: space-between; font-size: 0.88rem;">
+<span style="color: #64748b;">ความแม่นยำวิชานี้:</span>
+<b style="color: #059669; font-size: 0.95rem;">{current_stats['overall_accuracy']}%</b>
+</div>
+</div>''', unsafe_allow_html=True)
 
 def render_exam_in_progress():
     questions = st.session_state.exam_questions
@@ -546,9 +598,12 @@ def render_exam_results():
         st.success("🎉 ยอดเยี่ยมที่สุด! คุณทำข้อสอบรอบนี้ถูกต้องครบ 100% ไม่มีข้อผิดพลาดค้างทบทวน")
         act_c1, act_c2, act_c3 = st.columns([1, 1, 1])
         with act_c1:
-            if st.button("🔄 สอบชุดใหม่", type="primary", use_container_width=True):
+            retry_label = "🏆 สอบจริงเต็มรูปแบบใหม่" if is_full_sim else "🔄 สอบชุดใหม่"
+            if st.button(retry_label, type="primary", use_container_width=True):
                 st.session_state.exam_submitted = False
                 st.session_state.exam_active = False
+                if is_full_sim:
+                    quiz_engine.start_full_simulation_exam(st.session_state, duration_minutes=180)
                 st.rerun()
         with act_c2:
             if st.button("📚 ไปฝึกทำแยกหมวดหมู่", use_container_width=True):
