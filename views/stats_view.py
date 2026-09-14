@@ -168,11 +168,22 @@ def render_subject_dashboard(subj_key, subj_name, primary_color):
             ''', unsafe_allow_html=True)
 
 def render_full_exam_dashboard():
-    stats = db.get_full_simulation_stats()
+    if not hasattr(db, 'get_full_simulation_stats'):
+        import importlib
+        importlib.reload(db)
+    if hasattr(db, 'get_full_simulation_stats'):
+        stats = db.get_full_simulation_stats()
+    else:
+        stats = {
+            'total_bank_questions': 0, 'total_exams': 0, 'avg_score': 0.0,
+            'max_points': 0, 'avg_points': 0.0, 'passed_count': 0, 'top10_count': 0,
+            'latest_session': None, 'recent_sessions': [], 'mistake_count': 0,
+            'mastered_count': 0, 'practiced_count': 0, 'overall_accuracy': 0.0
+        }
     
     st.markdown("<h4 style='color: #d97706; margin-top: 6px;'>🏆 สถิติผลการสอบจริงเต็มรูปแบบ (200 คะแนน 180 นาที)</h4>", unsafe_allow_html=True)
     
-    total_exams = stats['total_exams']
+    total_exams = stats.get('total_exams', 0)
     
     # 4 Key Metrics Row
     m1, m2, m3, m4 = st.columns(4)
@@ -188,23 +199,23 @@ def render_full_exam_dashboard():
         st.markdown(f'''
         <div class="stat-card">
             <div class="stat-label">คะแนนสูงสุดที่ทำได้</div>
-            <div class="stat-value" style="color: #059669;">{stats['max_points']} <span style="font-size: 1rem; color: #94a3b8;">/ 200</span></div>
-            <div style="font-size: 0.78rem; color: #059669; margin-top: 2px;">{round(stats['max_points']/2, 1)}% ของคะแนนเต็ม</div>
+            <div class="stat-value" style="color: #059669;">{stats.get('max_points', 0)} <span style="font-size: 1rem; color: #94a3b8;">/ 200</span></div>
+            <div style="font-size: 0.78rem; color: #059669; margin-top: 2px;">{round(stats.get('max_points', 0)/2, 1)}% ของคะแนนเต็ม</div>
         </div>
         ''', unsafe_allow_html=True)
     with m3:
         st.markdown(f'''
         <div class="stat-card">
             <div class="stat-label">คะแนนเฉลี่ยรวม</div>
-            <div class="stat-value" style="color: #d97706;">{stats['avg_points']} <span style="font-size: 1rem; color: #94a3b8;">/ 200</span></div>
-            <div style="font-size: 0.78rem; color: #d97706; margin-top: 2px;">เฉลี่ย {stats['avg_score']}%</div>
+            <div class="stat-value" style="color: #d97706;">{stats.get('avg_points', 0.0)} <span style="font-size: 1rem; color: #94a3b8;">/ 200</span></div>
+            <div style="font-size: 0.78rem; color: #d97706; margin-top: 2px;">เฉลี่ย {stats.get('avg_score', 0.0)}%</div>
         </div>
         ''', unsafe_allow_html=True)
     with m4:
         st.markdown(f'''
         <div class="stat-card">
             <div class="stat-label">ผ่านเกณฑ์ / ลุ้น Top 10</div>
-            <div class="stat-value" style="color: #b45309;">{stats['passed_count']} <span style="font-size: 0.85rem; color: #64748b;">ผ่าน</span> | {stats['top10_count']} <span style="font-size: 0.85rem; color: #b45309;">Top10</span></div>
+            <div class="stat-value" style="color: #b45309;">{stats.get('passed_count', 0)} <span style="font-size: 0.85rem; color: #64748b;">ผ่าน</span> | {stats.get('top10_count', 0)} <span style="font-size: 0.85rem; color: #b45309;">Top10</span></div>
             <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">เกณฑ์ 120 คะแนน / 170+ คะแนน</div>
         </div>
         ''', unsafe_allow_html=True)
@@ -213,7 +224,7 @@ def render_full_exam_dashboard():
     
     # Recent Exam Sessions Table
     st.subheader("📜 ประวัติการจำลองสอบจริงเต็มรูปแบบย้อนหลัง")
-    history = stats['recent_sessions']
+    history = stats.get('recent_sessions', [])
     
     if not history:
         st.info("ยังไม่มีประวัติการจำลองสอบจริงเต็มรูปแบบ (200 คะแนน) กดไปที่เมนู '🏆 สอบจริงเต็มรูปแบบ' เพื่อเริ่มสอบรอบแรก")

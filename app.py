@@ -1,8 +1,25 @@
 # -*- coding: utf-8 -*-
+import importlib
 import streamlit as st
 import db
 import quiz_engine
 import styles
+import views.exam_view
+import views.review_view
+import views.practice_view
+import views.stats_view
+import views.manage_view
+
+# Ensure hot-reload resilience on Streamlit Cloud
+importlib.reload(db)
+importlib.reload(quiz_engine)
+importlib.reload(styles)
+importlib.reload(views.exam_view)
+importlib.reload(views.review_view)
+importlib.reload(views.practice_view)
+importlib.reload(views.stats_view)
+importlib.reload(views.manage_view)
+
 from views.exam_view import render_exam_view
 from views.review_view import render_review_view
 from views.practice_view import render_practice_view
@@ -212,25 +229,35 @@ with st.sidebar:
     
     # Sidebar Quick Stats Widget
     if is_full_page:
-        f_stats = db.get_full_simulation_stats()
+        if not hasattr(db, 'get_full_simulation_stats'):
+            importlib.reload(db)
+        if hasattr(db, 'get_full_simulation_stats'):
+            f_stats = db.get_full_simulation_stats()
+        else:
+            f_stats = {
+                'total_bank_questions': 0, 'total_exams': 0, 'avg_score': 0.0,
+                'max_points': 0, 'avg_points': 0.0, 'passed_count': 0, 'top10_count': 0,
+                'latest_session': None, 'recent_sessions': [], 'mistake_count': 0,
+                'mastered_count': 0, 'practiced_count': 0, 'overall_accuracy': 0.0
+            }
         st.markdown(f'''
         <div style="background: #f1f5f9; padding: 14px; border-radius: 12px; font-size: 0.85rem; border: 1px solid #e2e8f0;">
             <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">📈 สรุปสอบจริงเต็มรูปแบบ (200 คะแนน)</div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                 <span style="color: #64748b;">สอบไปแล้ว:</span>
-                <b>{f_stats['total_exams']} ครั้ง</b>
+                <b>{f_stats.get('total_exams', 0)} ครั้ง</b>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                 <span style="color: #64748b;">คะแนนสูงสุด:</span>
-                <b style="color: #059669;">{f_stats['max_points']} / 200 คะแนน</b>
+                <b style="color: #059669;">{f_stats.get('max_points', 0)} / 200 คะแนน</b>
             </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                 <span style="color: #64748b;">คะแนนเฉลี่ย:</span>
-                <b style="color: #d97706;">{f_stats['avg_points']} / 200 คะแนน</b>
+                <b style="color: #d97706;">{f_stats.get('avg_points', 0.0)} / 200 คะแนน</b>
             </div>
             <div style="display: flex; justify-content: space-between;">
                 <span style="color: #64748b;">ข้อผิดค้างทบทวน:</span>
-                <b style="color: #ef4444;">{f_stats['mistake_count']} ข้อ</b>
+                <b style="color: #ef4444;">{f_stats.get('mistake_count', 0)} ข้อ</b>
             </div>
         </div>
         ''', unsafe_allow_html=True)

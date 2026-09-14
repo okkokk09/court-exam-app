@@ -69,11 +69,22 @@ def render_full_exam_lobby():
 
     with col2:
         st.markdown("**📊 สถิติการสอบจริงของคุณ (200 คะแนน):**")
-        full_stats = db.get_full_simulation_stats()
-        total_sims = full_stats['total_exams']
+        if not hasattr(db, 'get_full_simulation_stats'):
+            import importlib
+            importlib.reload(db)
+        if hasattr(db, 'get_full_simulation_stats'):
+            full_stats = db.get_full_simulation_stats()
+        else:
+            full_stats = {
+                'total_bank_questions': 0, 'total_exams': 0, 'avg_score': 0.0,
+                'max_points': 0, 'avg_points': 0.0, 'passed_count': 0, 'top10_count': 0,
+                'latest_session': None, 'recent_sessions': [], 'mistake_count': 0,
+                'mastered_count': 0, 'practiced_count': 0, 'overall_accuracy': 0.0
+            }
+        total_sims = full_stats.get('total_exams', 0)
         
         if total_sims > 0:
-            latest = full_stats['latest_session']
+            latest = full_stats.get('latest_session')
             latest_pts = (latest['score'] * 2) if latest else 0
             latest_pct = latest['percentage'] if latest else 0.0
             latest_date = latest['created_at'] if latest else '-'
