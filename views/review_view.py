@@ -104,6 +104,7 @@ def render_interactive_review(questions):
     if 'review_answers' not in st.session_state:
         st.session_state.review_answers = {}
     review_answers = st.session_state.review_answers
+    answered_info = review_answers.get(idx, None)
 
     # Two-column layout: Left Question & Choices, Right Mistake Navigator Palette
     col_main, col_sidebar = st.columns([2.2, 1.3])
@@ -155,8 +156,6 @@ def render_interactive_review(questions):
         correct_idx = q.get('answer_index', 0)
         
         # Check if this question has been answered
-        answered_info = review_answers.get(idx, None)
-        
         if answered_info is None:
             st.markdown("<p style='font-size: 1rem; font-weight: 600; color: #4338ca; margin-bottom: 10px;'>⚡ แตะเลือกคำตอบ (ตรวจพร้อมเฉลยทันที):</p>", unsafe_allow_html=True)
             for c_idx, opt in enumerate(options):
