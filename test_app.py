@@ -52,7 +52,7 @@ class TestQuizApp(unittest.TestCase):
         db.record_answer(qid, wrong_ans, is_correct=False)
         
         # Check mistake bank
-        mistakes = db.get_mistake_questions()
+        mistakes = db.get_mistake_questions(limit=500)
         mistake_ids = [m['id'] for m in mistakes]
         self.assertIn(qid, mistake_ids, 'Question answered wrongly should appear in mistake bank')
         
@@ -63,6 +63,19 @@ class TestQuizApp(unittest.TestCase):
         
         stats = db.get_dashboard_stats()
         self.assertGreater(stats['practiced_count'], 0)
+        
+        # 3. Test clearing mistake on correct in review mode
+        db.record_answer(qid, correct_ans, is_correct=True, clear_mistake_on_correct=True)
+        mistakes_after = db.get_mistake_questions()
+        mistake_ids_after = [m['id'] for m in mistakes_after]
+        self.assertNotIn(qid, mistake_ids_after, 'Question cleared in review mode should no longer be in mistake bank')
+        
+        # 4. Test manual clear_question_mistake
+        q2 = db.get_all_questions()[1]
+        db.record_answer(q2['id'], (q2['answer_index'] + 1) % 4, is_correct=False)
+        self.assertIn(q2['id'], [m['id'] for m in db.get_mistake_questions(limit=500)])
+        db.clear_question_mistake(q2['id'])
+        self.assertNotIn(q2['id'], [m['id'] for m in db.get_mistake_questions(limit=500)])
         
     def test_exam_session_calculation(self):
         class DummySessionState(dict):

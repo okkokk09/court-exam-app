@@ -110,6 +110,21 @@ def render_interactive_review(questions):
     
     with col_main:
         # Progress & Stats header
+        is_fixed = (q.get('times_wrong', 0) == 0) or (answered_info is not None and answered_info.get('is_correct'))
+        
+        if is_fixed:
+            stat_badges = f'''
+            <span style="font-size: 0.85rem; color: #10b981; font-weight: 700; background: #ecfdf5; padding: 4px 12px; border-radius: 8px; border: 1px solid #a7f3d0;">
+                🎉 ซ่อมผ่านแล้ว (ปลดออกจากคลังข้อผิดเรียบร้อย ✅)
+            </span> &nbsp;|&nbsp;
+            <span style="font-size: 0.85rem; color: #10b981; font-weight: 600;">✅ ตอบถูกสะสม: {q.get('times_correct', 0)} ครั้ง</span>
+            '''
+        else:
+            stat_badges = f'''
+            <span style="font-size: 0.85rem; color: #ef4444; font-weight: 600;">❌ เคยตอบผิด: {q.get('times_wrong', 0)} ครั้ง</span> &nbsp;|&nbsp;
+            <span style="font-size: 0.85rem; color: #10b981; font-weight: 600;">✅ เคยตอบถูก: {q.get('times_correct', 0)} ครั้ง</span>
+            '''
+
         st.markdown(f'''
         <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 18px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
             <div>
@@ -117,8 +132,7 @@ def render_interactive_review(questions):
                 <span class="q-category-tag" style="margin-left: 8px;">{q.get('category', 'ทั่วไป')}</span>
             </div>
             <div>
-                <span style="font-size: 0.85rem; color: #ef4444; font-weight: 600;">❌ เคยตอบผิด: {q['times_wrong']} ครั้ง</span> |
-                <span style="font-size: 0.85rem; color: #10b981; font-weight: 600;">✅ เคยตอบถูก: {q['times_correct']} ครั้ง</span>
+                {stat_badges}
             </div>
         </div>
         ''', unsafe_allow_html=True)
@@ -149,10 +163,11 @@ def render_interactive_review(questions):
                 c_letter = choice_letters[c_idx]
                 if st.button(f"**{c_letter}.**  {opt}", key=f"rev_btn_{q['id']}_{idx}_{c_idx}", use_container_width=True):
                     is_correct = (c_idx == correct_idx)
-                    db.record_answer(q['id'], c_idx, is_correct)
+                    db.record_answer(q['id'], c_idx, is_correct, clear_mistake_on_correct=True)
                     # Update in-memory question stats immediately so user sees live update!
                     if is_correct:
                         q['times_correct'] = q.get('times_correct', 0) + 1
+                        q['times_wrong'] = 0 # Cleared!
                         if 'mistakes' in st.session_state:
                             st.session_state.mistakes = [m for m in st.session_state.mistakes if m.get('id') != q['id']]
                     else:
@@ -162,7 +177,7 @@ def render_interactive_review(questions):
                     st.rerun()
                     
             st.write("")
-            c_btn1, c_btn2 = st.columns([1, 1])
+            c_btn1, c_btn2, c_btn3 = st.columns([1, 1, 1.2])
             with c_btn1:
                 if st.button("⬅️ ข้อก่อนหน้า", disabled=(idx == 0), key="rev_prev_unans", use_container_width=True):
                     st.session_state.review_q_idx -= 1
@@ -171,12 +186,18 @@ def render_interactive_review(questions):
                 if st.button("ข้ามไปข้อถัดไป ➡️", disabled=(idx == total - 1), key="rev_next_unans", use_container_width=True):
                     st.session_state.review_q_idx += 1
                     st.rerun()
+            with c_btn3:
+                if st.button("🗑️ ปลดข้อนี้ออกจากคลังข้อผิด", key="rev_clear_unans", use_container_width=True, help="ลบข้อนี้ออกจากคลังข้อผิดทันที"):
+                    db.clear_question_mistake(q['id'])
+                    q['times_wrong'] = 0
+                    st.session_state.review_answers[idx] = {'selected': correct_idx, 'is_correct': True}
+                    st.rerun()
         else:
             user_choice = answered_info['selected']
             is_correct = answered_info['is_correct']
             
             if is_correct:
-                st.success("🎉 **ยอดเยี่ยมมาก! คุณซ่อมข้อนี้ถูกต้องแล้ว** (ระบบอัปเดตสถิติลงฐานข้อมูลเรียบร้อย ✅)")
+                st.success("🎉 **ยอดเยี่ยมมาก! คุณซ่อมข้อนี้ถูกต้องแล้ว** (ระบบได้ปลดข้อนี้ออกจากคลังข้อผิด และอัปเดตสถิติเรียบร้อย ✅)")
             else:
                 st.error(f"❌ **ยังไม่ถูกต้อง** (เฉลยที่ถูกต้องคือ: **{choice_letters[correct_idx]}. {options[correct_idx]}**)")
             
@@ -208,7 +229,7 @@ def render_interactive_review(questions):
             legal_engine.render_legal_reference_expander(q, expanded=True)
             
             st.write("")
-            c_btn1, c_btn2, c_btn3 = st.columns([1, 1.5, 1])
+            c_btn1, c_btn2, c_btn3, c_btn4 = st.columns([1, 1.4, 1, 1.2])
             with c_btn1:
                 if st.button("⬅️ ข้อก่อนหน้า", disabled=(idx == 0), key="rev_prev_ans", use_container_width=True):
                     st.session_state.review_q_idx -= 1
@@ -218,8 +239,14 @@ def render_interactive_review(questions):
                     st.session_state.review_q_idx += 1
                     st.rerun()
             with c_btn3:
-                if st.button("🔄 ตอบข้อนี้ใหม่", key="rev_retry_btn", use_container_width=True, help="ล้างคำตอบของข้อนี้เพื่อลองเลือกใหม่อีกครั้ง"):
+                if st.button("🔄 ตอบใหม่", key="rev_retry_btn", use_container_width=True, help="ล้างคำตอบของข้อนี้เพื่อลองเลือกใหม่อีกครั้ง"):
                     del st.session_state.review_answers[idx]
+                    st.rerun()
+            with c_btn4:
+                if st.button("🗑️ ปลดข้อผิด", key="rev_clear_ans", use_container_width=True, help="ลบข้อนี้ออกจากคลังข้อผิดอย่างถาวร"):
+                    db.clear_question_mistake(q['id'])
+                    q['times_wrong'] = 0
+                    st.toast("✅ ปลดข้อนี้ออกจากคลังข้อผิดเรียบร้อยแล้ว", icon="🗑️")
                     st.rerun()
 
     # Sidebar / Right Navigator Palette
@@ -324,3 +351,11 @@ def render_flashcards_view(questions):
             
             # Legal References & Precedents Engine
             legal_engine.render_legal_reference_expander(q, expanded=False)
+            
+            fc_col1, fc_col2 = st.columns([3, 1])
+            with fc_col2:
+                if st.button("🗑️ ปลดออกจากคลังข้อผิด", key=f"fc_clear_{q['id']}_{i}", use_container_width=True, help="ลบข้อนี้ออกจากคลังข้อผิดทันที"):
+                    db.clear_question_mistake(q['id'])
+                    q['times_wrong'] = 0
+                    st.toast("✅ ปลดข้อนี้ออกจากคลังข้อผิดเรียบร้อยแล้ว", icon="🗑️")
+                    st.rerun()

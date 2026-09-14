@@ -286,7 +286,7 @@ def get_all_categories(subject=None):
     conn.close()
     return [(r['category'], r['count']) for r in rows]
 
-def record_answer(question_id, selected_index, is_correct):
+def record_answer(question_id, selected_index, is_correct, clear_mistake_on_correct=False):
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -299,7 +299,10 @@ def record_answer(question_id, selected_index, is_correct):
     if row:
         times_answered = row['times_answered'] + 1
         times_correct = row['times_correct'] + (1 if is_correct else 0)
-        times_wrong = row['times_wrong'] + (0 if is_correct else 1)
+        if is_correct and clear_mistake_on_correct:
+            times_wrong = 0 # Mistake successfully repaired and cleared!
+        else:
+            times_wrong = row['times_wrong'] + (0 if is_correct else 1)
         
         wrong_opts = json.loads(row['wrong_options_json'] or '{}')
         if not is_correct and selected_index is not None:
@@ -310,7 +313,7 @@ def record_answer(question_id, selected_index, is_correct):
         # 0: new, 1: practiced, 2: progressing, 3: mastered
         if times_correct >= 3 and times_wrong == 0:
             mastery = 3
-        elif is_correct and times_correct > times_wrong:
+        elif is_correct and (times_correct > times_wrong or times_wrong == 0):
             mastery = 2
         elif is_correct:
             mastery = 1
@@ -328,12 +331,25 @@ def record_answer(question_id, selected_index, is_correct):
         if not is_correct and selected_index is not None:
             wrong_opts[str(selected_index)] = 1
         mastery = 1 if is_correct else 0
+        times_wrong = 0 if is_correct else 1
         
         cursor.execute('''
         INSERT INTO question_stats (question_id, times_answered, times_correct, times_wrong, wrong_options_json, last_answered_at, last_result, mastery_level)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (question_id, 1, 1 if is_correct else 0, 0 if is_correct else 1, json.dumps(wrong_opts), now, 1 if is_correct else 0, mastery))
+        ''', (question_id, 1, 1 if is_correct else 0, times_wrong, json.dumps(wrong_opts), now, 1 if is_correct else 0, mastery))
         
+    conn.commit()
+    conn.close()
+
+def clear_question_mistake(question_id):
+    '''Clears mistake record for a specific question so it no longer appears in Mistake Bank'''
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+    UPDATE question_stats
+    SET times_wrong = 0, last_result = 1, mastery_level = MAX(mastery_level, 2)
+    WHERE question_id = ?
+    ''', (question_id,))
     conn.commit()
     conn.close()
 
