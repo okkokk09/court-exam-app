@@ -119,7 +119,8 @@ with st.sidebar:
     st.markdown("**📌 เลือกโหมดการทำงาน:**")
     
     nav_options = {
-        'exam': '🏛️ จำลองสอบจริง (50 ข้อ 60 นาที)',
+        'full_exam': '🏆 สอบจริงเต็มรูปแบบ (200 คะแนน 180 นาที)',
+        'exam': '🏛️ จำลองสอบรายวิชา (Quick Exam)',
         'review': '🔄 ทบทวนข้อผิดซ้ำ (Mistake Bank)',
         'practice': '📚 ฝึกทำแยกหมวดหมู่ (Practice)',
         'stats': '📊 แดชบอร์ดสถิติ & จุดอ่อน',
@@ -216,7 +217,7 @@ with st.sidebar:
     st.caption("พัฒนาสำหรับเตรียมสอบข้าราชการศาลยุติธรรม © 2026")
 
 # 7. Main View Router
-if st.session_state.current_page == 'exam':
+if st.session_state.current_page in ('exam', 'full_exam'):
     render_exam_view()
 elif st.session_state.current_page == 'review':
     render_review_view()

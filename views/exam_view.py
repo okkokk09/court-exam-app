@@ -17,25 +17,54 @@ def render_exam_view():
 def render_exam_lobby():
     subject = st.session_state.get('selected_subject', 'law')
     is_com = (subject == 'computer')
+    is_full_page = (st.session_state.get('current_page') == 'full_exam')
     
-    lobby_title = "💻 โหมดจำลองทำข้อสอบเสมือนจริง: วิชาคอมพิวเตอร์และสารสนเทศ" if is_com else "🏛️ โหมดจำลองทำข้อสอบเสมือนจริง: วิชากฎหมายศาลยุติธรรม"
-    lobby_desc = (
-        "ฝึกทำข้อสอบปรนัยความรู้ความสามารถด้านคอมพิวเตอร์และเทคโนโลยีสารสนเทศ ฮาร์ดแวร์ ซอฟต์แวร์ MS Office เครือข่าย ความปลอดภัยไซเบอร์ พ.ร.บ.คอมฯ และ AI"
-        if is_com else
-        "ฝึกทำข้อสอบปรนัย กฎหมายระเบียบบริหารราชการศาลยุติธรรม พ.ศ. 2543 (และแก้ไขเพิ่มเติม) ภายใต้สภาวะการสอบจริง"
-    )
-    
-    banner_bg = 'linear-gradient(135deg, #0f172a 0%, #0369a1 100%)' if is_com else 'linear-gradient(135deg, #0b2239 0%, #1e3a8a 100%)'
-    banner_border = '#38bdf8' if is_com else '#d4af37'
-    
-    st.markdown(f'''
-    <div style="background: {banner_bg}; padding: 24px 28px; border-radius: 16px; color: white; margin-bottom: 24px; border: 1px solid {banner_border};">
-        <h2 style="margin: 0 0 8px 0; color: #f8fafc;">{lobby_title}</h2>
-        <p style="margin: 0; color: #cbd5e1; font-size: 1rem;">
-            {lobby_desc}
-        </p>
+    # 1. Full Exam Simulation Hero Banner & Launch Card (Official Court Exam Standard)
+    st.markdown('''
+    <div style="background: linear-gradient(135deg, #0b2239 0%, #1e3a8a 50%, #1e40af 100%); padding: 26px 30px; border-radius: 18px; color: white; margin-bottom: 24px; border: 2px solid #d4af37; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 2rem;">🏆</span>
+                <div>
+                    <h2 style="margin: 0; color: #fef08a; font-size: 1.6rem; font-weight: 700;">จำลองสอบจริงเต็มรูปแบบ (Full Exam Simulation)</h2>
+                    <p style="margin: 2px 0 0 0; color: #e2e8f0; font-size: 0.95rem;">
+                        จำลองสภาวะสอบเสมือนจริงของสำนักงานศาลยุติธรรม ภาคความรู้ความสามารถเฉพาะตำแหน่ง
+                    </p>
+                </div>
+            </div>
+            <div>
+                <span style="background: rgba(212, 175, 55, 0.25); border: 1.5px solid #d4af37; color: #fef08a; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.85rem;">
+                    💯 200 คะแนนเต็ม | ⏱️ 180 นาที
+                </span>
+            </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; background: rgba(0,0,0,0.25); padding: 14px 18px; border-radius: 12px; margin-bottom: 18px; border: 1px solid rgba(255,255,255,0.1);">
+            <div>
+                <span style="color: #93c5fd; font-size: 0.85rem; font-weight: 600;">⚖️ หมวดกฎหมายระเบียบศาลฯ:</span><br>
+                <b style="color: #ffffff; font-size: 1rem;">30 ข้อ (60 คะแนน)</b>
+            </div>
+            <div>
+                <span style="color: #93c5fd; font-size: 0.85rem; font-weight: 600;">💻 หมวดคอมพิวเตอร์และสารสนเทศ:</span><br>
+                <b style="color: #ffffff; font-size: 1rem;">70 ข้อ (140 คะแนน)</b>
+            </div>
+            <div>
+                <span style="color: #93c5fd; font-size: 0.85rem; font-weight: 600;">🎯 เกณฑ์การตัดสินผลสอบ:</span><br>
+                <b style="color: #34d399; font-size: 0.95rem;">ผ่าน 60% (120 คะแนน) | ลุ้น Top 10 (170+ คะแนน)</b>
+            </div>
+        </div>
     </div>
     ''', unsafe_allow_html=True)
+    
+    # Big CTA for Full Simulation Exam
+    if st.button("🚀 เริ่มทำข้อสอบจำลองจริงเต็มรูปแบบ (100 ข้อ / 200 คะแนน / 180 นาที)", type="primary", use_container_width=True, key="btn_start_full_sim_lobby"):
+        quiz_engine.start_full_simulation_exam(st.session_state, duration_minutes=180)
+        st.rerun()
+        
+    st.write("---")
+    
+    # 2. Quick Subject Exam Customizer Section
+    st.subheader("🏛️ หรือเลือกจำลองสอบแบบแยกรายวิชา (Quick Subject Exam)")
     
     col1, col2 = st.columns([2, 1.2])
     
@@ -113,19 +142,30 @@ def render_exam_in_progress():
     
     # Check timer
     remaining_secs = quiz_engine.get_remaining_seconds(st.session_state)
+    is_full_sim = (st.session_state.get('exam_mode') == 'full_simulation')
+    duration_mins = st.session_state.get('duration_seconds', 3600) // 60
+    
     if remaining_secs <= 0 and st.session_state.exam_active:
-        st.warning("⚠️ หมดเวลา 60 นาทีแล้ว! ระบบกำลังส่งข้อสอบและประมวลผล...")
+        st.warning(f"⚠️ หมดเวลา {duration_mins} นาทีแล้ว! ระบบกำลังส่งข้อสอบและประมวลผล...")
         quiz_engine.calculate_and_save_exam_results(st.session_state)
         time.sleep(1)
         st.rerun()
         
-    time_str = quiz_engine.format_time_mmss(remaining_secs)
+    time_str = quiz_engine.format_time_hhmmss(remaining_secs)
     is_critical = remaining_secs < 300 # Less than 5 mins
     
     # Top Header & Timer Row
     col_t1, col_t2, col_t3 = st.columns([2.2, 1.3, 1.0])
     with col_t1:
-        mode_name = "🎯 วนทำซ้ำเฉพาะข้อที่ผิด (Mistake Bank)" if st.session_state.get('exam_mode') == 'mistakes_retest' else ("🔄 โหมดทบทวนข้อผิด" if st.session_state.get('exam_mode') == 'review_test' else "⚖️ โหมดจำลองสอบจริง")
+        if is_full_sim:
+            mode_name = "🏆 สอบจริงเต็มรูปแบบ (200 คะแนน 180 นาที)"
+        elif st.session_state.get('exam_mode') == 'mistakes_retest':
+            mode_name = "🎯 วนทำซ้ำเฉพาะข้อที่ผิด (Mistake Bank)"
+        elif st.session_state.get('exam_mode') == 'review_test':
+            mode_name = "🔄 โหมดทบทวนข้อผิด"
+        else:
+            mode_name = "⚖️ โหมดจำลองสอบรายวิชา"
+            
         st.markdown(f'''
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
             <span class="nav-badge">{mode_name}</span>
@@ -320,30 +360,117 @@ def render_exam_results():
     total = res['total_questions']
     percentage = res['percentage']
     passed = res['passed']
+    is_full_sim = res.get('is_full_simulation', False)
+    earned_pts = res.get('earned_points', score * (2 if is_full_sim else 1))
+    max_pts = res.get('total_points', total * (2 if is_full_sim else 1))
     
-    # Hero Score Card
+    tier = res.get('tier', 'passed' if passed else 'failed')
+    tier_title = res.get('tier_title', '🎉 ยินดีด้วย! คุณสอบผ่านเกณฑ์ (60%)' if passed else '💪 ยังไม่ผ่านเกณฑ์ พยายามใหม่อีกนิดนะ!')
+    tier_badge = res.get('tier_badge', 'PASSED' if passed else 'FAILED')
+    tier_color = res.get('tier_color', '#059669' if passed else '#dc2626')
+    tier_desc = res.get('tier_desc', '')
     banner_color = "#059669" if passed else "#dc2626"
     status_text = "🎉 ยินดีด้วย! คุณสอบผ่านเกณฑ์ (60%)" if passed else "💪 ยังไม่ผ่านเกณฑ์ พยายามใหม่อีกนิดนะ!"
     
-    st.markdown(f'''
-    <div class="result-hero">
-        <div style="font-size: 1.2rem; color: #f8fafc; font-weight: 600; margin-bottom: 16px;">{status_text}</div>
-        <div class="score-circle" style="border-color: {banner_color};">
-            <div class="score-number">{score}</div>
-            <div class="score-total">เต็ม {total}</div>
+    # Hero Score Card
+    if is_full_sim:
+        st.markdown(f'''
+        <div class="result-hero" style="border: 2px solid {tier_color};">
+            <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 12px;">
+                <span style="background: {tier_color}; color: white; padding: 4px 16px; border-radius: 20px; font-weight: 700; font-size: 0.9rem; letter-spacing: 0.5px;">
+                    {tier_badge}
+                </span>
+            </div>
+            <div style="font-size: 1.35rem; color: #f8fafc; font-weight: 700; margin-bottom: 8px;">{tier_title}</div>
+            <p style="color: #cbd5e1; font-size: 0.95rem; margin: 0 auto 16px auto; max-width: 650px;">{tier_desc}</p>
+            <div class="score-circle" style="border-color: {tier_color}; width: 170px; height: 170px;">
+                <div class="score-number" style="font-size: 3rem; color: #fef08a;">{earned_pts}</div>
+                <div class="score-total" style="font-size: 0.85rem;">เต็ม {max_pts} คะแนน</div>
+            </div>
+            <h2 style="margin: 10px 0 0 0; font-size: 2.2rem; color: #ffffff;">{percentage}%</h2>
+            <p style="color: #94a3b8; margin-top: 6px;">ทำถูก {score} จาก {total} ข้อ | เวลาที่ใช้: {res['time_spent_str']}</p>
         </div>
-        <h2 style="margin: 0; font-size: 2rem; color: #ffffff;">{percentage}%</h2>
-        <p style="color: #94a3b8; margin-top: 6px;">เวลาที่ใช้: {res['time_spent_str']} นาที</p>
-    </div>
-    ''', unsafe_allow_html=True)
+        ''', unsafe_allow_html=True)
+    else:
+        st.markdown(f'''
+        <div class="result-hero">
+            <div style="font-size: 1.2rem; color: #f8fafc; font-weight: 600; margin-bottom: 16px;">{status_text}</div>
+            <div class="score-circle" style="border-color: {banner_color};">
+                <div class="score-number">{score}</div>
+                <div class="score-total">เต็ม {total} ข้อ</div>
+            </div>
+            <h2 style="margin: 0; font-size: 2rem; color: #ffffff;">{percentage}%</h2>
+            <p style="color: #94a3b8; margin-top: 6px;">เวลาที่ใช้: {res['time_spent_str']}</p>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+    # Subject Breakdown for Full Simulation
+    if is_full_sim:
+        subj_stats = res.get('subject_stats', {})
+        law_st = subj_stats.get('law', {'total': 30, 'correct': 0, 'wrong': 0, 'unanswered': 0, 'points': 0, 'max_points': 60})
+        com_st = subj_stats.get('computer', {'total': 70, 'correct': 0, 'wrong': 0, 'unanswered': 0, 'points': 0, 'max_points': 140})
+        
+        law_pct = round((law_st['correct'] / max(1, law_st['total'])) * 100, 1)
+        com_pct = round((com_st['correct'] / max(1, com_st['total'])) * 100, 1)
+        
+        st.markdown("<h4 style='color: #1e3a8a; margin: 18px 0 10px 0;'>📊 ผลการสอบแยกรายหมวดวิชา (Subject Breakdown)</h4>", unsafe_allow_html=True)
+        col_sb1, col_sb2 = st.columns(2)
+        
+        with col_sb1:
+            law_bar_color = "#059669" if law_pct >= 60 else "#dc2626"
+            st.markdown(f'''
+            <div style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-weight: 700; color: #1e40af; font-size: 1rem;">⚖️ หมวดกฎหมายระเบียบศาลฯ</span>
+                    <span style="background: #eff6ff; color: #1e40af; font-weight: 700; font-size: 0.85rem; padding: 2px 10px; border-radius: 12px;">{law_pct}%</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.92rem; margin-bottom: 4px;">
+                    <span style="color: #64748b;">คะแนนที่ได้:</span>
+                    <b style="color: #0f172a;">{law_st['points']} / {law_st['max_points']} คะแนน</b>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.92rem; margin-bottom: 8px;">
+                    <span style="color: #64748b;">ตอบถูก:</span>
+                    <b style="color: {law_bar_color};">{law_st['correct']} / {law_st['total']} ข้อ</b>
+                </div>
+                <div style="background: #e2e8f0; border-radius: 6px; height: 8px; overflow: hidden;">
+                    <div style="background: {law_bar_color}; width: {law_pct}%; height: 100%;"></div>
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+        with col_sb2:
+            com_bar_color = "#059669" if com_pct >= 60 else "#dc2626"
+            st.markdown(f'''
+            <div style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-weight: 700; color: #0284c7; font-size: 1rem;">💻 หมวดคอมพิวเตอร์และสารสนเทศ</span>
+                    <span style="background: #e0f2fe; color: #0284c7; font-weight: 700; font-size: 0.85rem; padding: 2px 10px; border-radius: 12px;">{com_pct}%</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.92rem; margin-bottom: 4px;">
+                    <span style="color: #64748b;">คะแนนที่ได้:</span>
+                    <b style="color: #0f172a;">{com_st['points']} / {com_st['max_points']} คะแนน</b>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.92rem; margin-bottom: 8px;">
+                    <span style="color: #64748b;">ตอบถูก:</span>
+                    <b style="color: {com_bar_color};">{com_st['correct']} / {com_st['total']} ข้อ</b>
+                </div>
+                <div style="background: #e2e8f0; border-radius: 6px; height: 8px; overflow: hidden;">
+                    <div style="background: {com_bar_color}; width: {com_pct}%; height: 100%;"></div>
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+            
+        st.write("")
     
     # 4 Stat Cards
     c1, c2, c3, c4 = st.columns(4)
     with c1:
+        correct_sub = f"{earned_pts}/{max_pts} คะแนน" if is_full_sim else f"{percentage}%"
         st.markdown(f'''
         <div class="stat-card">
-            <div class="stat-label">ตอบถูก</div>
+            <div class="stat-label">ตอบถูก ({score}/{total} ข้อ)</div>
             <div class="stat-value" style="color: #10b981;">{score} ข้อ</div>
+            <div style="font-size: 0.78rem; color: #059669; margin-top: 2px;">{correct_sub}</div>
         </div>
         ''', unsafe_allow_html=True)
     with c2:
@@ -351,6 +478,7 @@ def render_exam_results():
         <div class="stat-card">
             <div class="stat-label">ตอบผิด</div>
             <div class="stat-value" style="color: #ef4444;">{res['wrong_count']} ข้อ</div>
+            <div style="font-size: 0.78rem; color: #dc2626; margin-top: 2px;">-{res['wrong_count'] * (2 if is_full_sim else 1)} คะแนน</div>
         </div>
         ''', unsafe_allow_html=True)
     with c3:
@@ -358,6 +486,7 @@ def render_exam_results():
         <div class="stat-card">
             <div class="stat-label">ไม่ได้ตอบ</div>
             <div class="stat-value" style="color: #64748b;">{res['unanswered_count']} ข้อ</div>
+            <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">0 คะแนน</div>
         </div>
         ''', unsafe_allow_html=True)
     with c4:
@@ -365,6 +494,7 @@ def render_exam_results():
         <div class="stat-card">
             <div class="stat-label">บันทึกข้อผิดลง SQLite</div>
             <div class="stat-value" style="color: #3b82f6;">สำเร็จ ✅</div>
+            <div style="font-size: 0.78rem; color: #2563eb; margin-top: 2px;">Session #{res.get('session_id', '-')}</div>
         </div>
         ''', unsafe_allow_html=True)
         
@@ -400,9 +530,12 @@ def render_exam_results():
                 quiz_engine.start_mistakes_retest(st.session_state)
                 st.rerun()
         with act_c2:
-            if st.button("🔄 สอบใหม่ทั้งชุด", use_container_width=True, help="เริ่มจำลองสอบใหม่ทั้งชุด 50 ข้อ"):
+            retry_label = "🏆 สอบจริงเต็มรูปแบบใหม่" if is_full_sim else "🔄 สอบใหม่ทั้งชุด"
+            if st.button(retry_label, use_container_width=True, help="เริ่มทำข้อสอบใหม่อีกครั้ง"):
                 st.session_state.exam_submitted = False
                 st.session_state.exam_active = False
+                if is_full_sim:
+                    quiz_engine.start_full_simulation_exam(st.session_state, duration_minutes=180)
                 st.rerun()
         with act_c3:
             if st.button("📚 คลังข้อผิดทั้งหมด (Mistake Bank)", use_container_width=True, help="ไปที่โหมดทบทวนข้อผิดสะสมทั้งหมดจากฐานข้อมูล SQLite"):

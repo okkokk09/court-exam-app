@@ -168,6 +168,74 @@ class TestQuizApp(unittest.TestCase):
         self.assertEqual(len(dummy_state.exam_questions), 5, 'Retest questions should contain only the 5 missed questions')
         self.assertEqual(len(dummy_state.user_answers), 0)
 
+    def test_full_simulation_exam(self):
+        class DummySessionState(dict):
+            __getattr__ = dict.get
+            __setattr__ = dict.__setitem__
+            
+        # 1. Test database full simulation sampling
+        sim_qs = db.get_full_simulation_questions(law_count=30, computer_count=70)
+        self.assertEqual(len(sim_qs), 100, "Full simulation must contain exactly 100 questions")
+        
+        law_qs = [q for q in sim_qs if q.get('subject') == 'law']
+        com_qs = [q for q in sim_qs if q.get('subject') == 'computer']
+        self.assertEqual(len(law_qs), 30, "Must contain exactly 30 Law questions")
+        self.assertEqual(len(com_qs), 70, "Must contain exactly 70 Computer questions")
+        
+        # Check uniqueness
+        sim_ids = [q['id'] for q in sim_qs]
+        self.assertEqual(len(sim_ids), len(set(sim_ids)), "All 100 questions must be unique")
+        
+        # 2. Test starting full simulation exam
+        dummy_state = DummySessionState()
+        quiz_engine.init_session_state(dummy_state)
+        quiz_engine.start_full_simulation_exam(dummy_state, duration_minutes=180)
+        
+        self.assertTrue(dummy_state.exam_active)
+        self.assertEqual(dummy_state.exam_mode, 'full_simulation')
+        self.assertEqual(len(dummy_state.exam_questions), 100)
+        self.assertEqual(dummy_state.duration_seconds, 180 * 60) # 10800s
+        
+        # 3. Test 200-point scoring: Answer 86 correctly (172 points -> Top 10 tier)
+        for i in range(86):
+            correct_idx = dummy_state.exam_questions[i]['answer_index']
+            dummy_state.user_answers[i] = correct_idx
+        for i in range(86, 95): # 9 wrong
+            correct_idx = dummy_state.exam_questions[i]['answer_index']
+            dummy_state.user_answers[i] = (correct_idx + 1) % 4
+        # 5 unanswered (95..99)
+        
+        res = quiz_engine.calculate_and_save_exam_results(dummy_state)
+        self.assertTrue(res['is_full_simulation'])
+        self.assertEqual(res['total_questions'], 100)
+        self.assertEqual(res['points_per_question'], 2)
+        self.assertEqual(res['total_points'], 200)
+        self.assertEqual(res['score'], 86)
+        self.assertEqual(res['earned_points'], 172)
+        self.assertEqual(res['wrong_count'], 9)
+        self.assertEqual(res['unanswered_count'], 5)
+        self.assertEqual(res['percentage'], 86.0)
+        self.assertTrue(res['passed'])
+        self.assertEqual(res['tier'], 'top10')
+        self.assertIn('Top 10', res['tier_title'])
+        
+        # 4. Verify Subject Breakdown stats
+        subj_stats = res['subject_stats']
+        self.assertEqual(subj_stats['law']['total'], 30)
+        self.assertEqual(subj_stats['law']['max_points'], 60)
+        self.assertEqual(subj_stats['computer']['total'], 70)
+        self.assertEqual(subj_stats['computer']['max_points'], 140)
+        self.assertEqual(subj_stats['law']['points'] + subj_stats['computer']['points'], 172)
+
+    def test_time_formatting(self):
+        # Test 3 hours countdown
+        self.assertEqual(quiz_engine.format_time_hhmmss(10800), "03:00:00")
+        self.assertEqual(quiz_engine.format_time_hhmmss(3665), "01:01:05")
+        # Under 1 hour
+        self.assertEqual(quiz_engine.format_time_hhmmss(3599), "59:59")
+        self.assertEqual(quiz_engine.format_time_hhmmss(125), "02:05")
+        self.assertEqual(quiz_engine.format_time_hhmmss(0), "00:00")
+
 if __name__ == '__main__':
     unittest.main()
 

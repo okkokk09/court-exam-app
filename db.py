@@ -213,6 +213,15 @@ def get_random_questions(count=50, category=None, subject=None):
         })
     return result
 
+def get_full_simulation_questions(law_count=30, computer_count=70):
+    '''
+    Retrieves exactly law_count questions from 'law' and computer_count questions from 'computer',
+    returns a combined list of 100 questions.
+    '''
+    law_qs = get_random_questions(count=law_count, subject='law')
+    com_qs = get_random_questions(count=computer_count, subject='computer')
+    return law_qs + com_qs
+
 def get_mistake_questions(limit=50, filter_type='all_mistakes', subject=None):
     '''
     filter_type options:
