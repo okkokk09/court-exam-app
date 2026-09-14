@@ -69,15 +69,19 @@ def shuffle_questions_list(questions_list):
 def start_full_simulation_exam(st_session_state, duration_minutes=180):
     '''
     Starts Full Exam Simulation: Exactly 100 questions (30 Law + 70 Computer),
+    Strictly ordered: Law questions first (Q1-Q30) followed by Computer questions (Q31-Q100).
     180 minutes (3 hours) timer, 200 points scale.
     '''
-    questions = db.get_full_simulation_questions(law_count=30, computer_count=70)
-    # Shuffle the questions combined
-    random.shuffle(questions)
+    law_qs = db.get_random_questions(count=30, subject='law')
+    com_qs = db.get_random_questions(count=70, subject='computer')
     
-    # Shuffle choices if option is enabled
+    # Shuffle choices within questions if option is enabled
     if st_session_state.get('shuffle_options', True):
-        questions = shuffle_questions_list(questions)
+        law_qs = shuffle_questions_list(law_qs)
+        com_qs = shuffle_questions_list(com_qs)
+        
+    # Combine strictly: Law first (index 0..29 / ข้อ 1-30), Computer second (index 30..99 / ข้อ 31-100)
+    questions = law_qs + com_qs
         
     st_session_state.exam_active = True
     st_session_state.exam_submitted = False

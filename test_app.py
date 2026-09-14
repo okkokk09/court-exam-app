@@ -196,6 +196,12 @@ class TestQuizApp(unittest.TestCase):
         self.assertEqual(len(dummy_state.exam_questions), 100)
         self.assertEqual(dummy_state.duration_seconds, 180 * 60) # 10800s
         
+        # Verify ordering: Law questions first (0..29), Computer questions second (30..99)
+        for q in dummy_state.exam_questions[:30]:
+            self.assertEqual(q['subject'], 'law', "First 30 questions must be Law")
+        for q in dummy_state.exam_questions[30:]:
+            self.assertEqual(q['subject'], 'computer', "Remaining 70 questions must be Computer")
+        
         # 3. Test 200-point scoring: Answer 86 correctly (172 points -> Top 10 tier)
         for i in range(86):
             correct_idx = dummy_state.exam_questions[i]['answer_index']
