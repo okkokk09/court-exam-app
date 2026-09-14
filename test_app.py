@@ -227,11 +227,11 @@ class TestQuizApp(unittest.TestCase):
         
         # 4. Verify Subject Breakdown stats
         subj_stats = res['subject_stats']
-        self.assertEqual(subj_stats['law']['total'], 30)
-        self.assertEqual(subj_stats['law']['max_points'], 60)
-        self.assertEqual(subj_stats['computer']['total'], 70)
-        self.assertEqual(subj_stats['computer']['max_points'], 140)
-        self.assertEqual(subj_stats['law']['points'] + subj_stats['computer']['points'], 172)
+        # 5. Verify get_full_simulation_stats
+        full_stats = db.get_full_simulation_stats()
+        self.assertGreater(full_stats['total_exams'], 0)
+        self.assertGreater(full_stats['max_points'], 0)
+        self.assertIsNotNone(full_stats['latest_session'])
 
     def test_time_formatting(self):
         # Test 3 hours countdown

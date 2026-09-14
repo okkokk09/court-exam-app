@@ -210,29 +210,53 @@ with st.sidebar:
         
     st.write("---")
     
-    # Sidebar Quick Stats Widget (Filtered by active subject)
-    db_stats = db.get_dashboard_stats(subject=cur_subject)
-    st.markdown(f'''
-    <div style="background: #f1f5f9; padding: 14px; border-radius: 12px; font-size: 0.85rem; border: 1px solid #e2e8f0;">
-        <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">📈 สรุปภาพรวม ({ "คอมพิวเตอร์" if is_com_subj else "กฎหมายศาล" })</div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-            <span style="color: #64748b;">คลังข้อสอบ:</span>
-            <b>{db_stats['total_bank_questions']} ข้อ</b>
+    # Sidebar Quick Stats Widget
+    if is_full_page:
+        f_stats = db.get_full_simulation_stats()
+        st.markdown(f'''
+        <div style="background: #f1f5f9; padding: 14px; border-radius: 12px; font-size: 0.85rem; border: 1px solid #e2e8f0;">
+            <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">📈 สรุปสอบจริงเต็มรูปแบบ (200 คะแนน)</div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: #64748b;">สอบไปแล้ว:</span>
+                <b>{f_stats['total_exams']} ครั้ง</b>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: #64748b;">คะแนนสูงสุด:</span>
+                <b style="color: #059669;">{f_stats['max_points']} / 200 คะแนน</b>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: #64748b;">คะแนนเฉลี่ย:</span>
+                <b style="color: #d97706;">{f_stats['avg_points']} / 200 คะแนน</b>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: #64748b;">ข้อผิดค้างทบทวน:</span>
+                <b style="color: #ef4444;">{f_stats['mistake_count']} ข้อ</b>
+            </div>
         </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-            <span style="color: #64748b;">ฝึกไปแล้ว:</span>
-            <b>{db_stats['practiced_count']} ข้อ</b>
+        ''', unsafe_allow_html=True)
+    else:
+        db_stats = db.get_dashboard_stats(subject=cur_subject)
+        st.markdown(f'''
+        <div style="background: #f1f5f9; padding: 14px; border-radius: 12px; font-size: 0.85rem; border: 1px solid #e2e8f0;">
+            <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">📈 สรุปภาพรวม ({ "คอมพิวเตอร์" if is_com_subj else "กฎหมายศาล" })</div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: #64748b;">คลังข้อสอบ:</span>
+                <b>{db_stats['total_bank_questions']} ข้อ</b>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: #64748b;">ฝึกไปแล้ว:</span>
+                <b>{db_stats['practiced_count']} ข้อ</b>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: #64748b;">ข้อผิดค้างทบทวน:</span>
+                <b style="color: #ef4444;">{db_stats['mistake_count']} ข้อ</b>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+                <span style="color: #64748b;">ความแม่นยำ:</span>
+                <b style="color: #10b981;">{db_stats['overall_accuracy']}%</b>
+            </div>
         </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
-            <span style="color: #64748b;">ข้อผิดค้างทบทวน:</span>
-            <b style="color: #ef4444;">{db_stats['mistake_count']} ข้อ</b>
-        </div>
-        <div style="display: flex; justify-content: space-between;">
-            <span style="color: #64748b;">ความแม่นยำ:</span>
-            <b style="color: #10b981;">{db_stats['overall_accuracy']}%</b>
-        </div>
-    </div>
-    ''', unsafe_allow_html=True)
+        ''', unsafe_allow_html=True)
     
     st.write("")
     st.caption("พัฒนาสำหรับเตรียมสอบข้าราชการศาลยุติธรรม © 2026")

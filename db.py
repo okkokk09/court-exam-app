@@ -384,20 +384,108 @@ def save_exam_session(mode, category, total_q, score, time_spent_seconds, answer
         
     return session_id
 
-def get_exam_history(limit=20, subject=None):
+def get_exam_history(limit=20, subject=None, mode=None):
     conn = get_connection()
     cursor = conn.cursor()
+    conditions = []
+    params = []
+    
+    if mode:
+        conditions.append("mode = ?")
+        params.append(mode)
     if subject:
-        cursor.execute('''
-        SELECT * FROM exam_sessions 
-        WHERE subject = ? OR (subject IS NULL AND ? = 'law')
-        ORDER BY created_at DESC LIMIT ?
-        ''', (subject, subject, limit))
-    else:
-        cursor.execute('SELECT * FROM exam_sessions ORDER BY created_at DESC LIMIT ?', (limit,))
+        conditions.append("(subject = ? OR (subject IS NULL AND ? = 'law'))")
+        params.extend([subject, subject])
+        
+    where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
+    params.append(limit)
+    cursor.execute(f'SELECT * FROM exam_sessions {where_clause} ORDER BY created_at DESC LIMIT ?', tuple(params))
     rows = cursor.fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+def get_full_simulation_stats():
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    # 1. Total questions in bank
+    cursor.execute('SELECT COUNT(*) as count FROM questions')
+    total_bank = cursor.fetchone()['count']
+    
+    # 2. Full simulation sessions
+    cursor.execute('''
+    SELECT 
+        COUNT(*) as total_exams,
+        AVG(percentage) as avg_score,
+        MAX(score * 2) as max_points,
+        AVG(score * 2) as avg_points,
+        MAX(score) as max_score,
+        SUM(CASE WHEN (score * 2) >= 120 THEN 1 ELSE 0 END) as passed_count,
+        SUM(CASE WHEN (score * 2) >= 170 THEN 1 ELSE 0 END) as top10_count
+    FROM exam_sessions
+    WHERE mode = 'full_simulation' OR total_questions = 100
+    ''')
+    stat_row = cursor.fetchone()
+    total_exams = stat_row['total_exams'] or 0
+    avg_score = round(stat_row['avg_score'] or 0.0, 1)
+    max_points = stat_row['max_points'] or 0
+    avg_points = round(stat_row['avg_points'] or 0.0, 1)
+    passed_count = stat_row['passed_count'] or 0
+    top10_count = stat_row['top10_count'] or 0
+    
+    # 3. Latest session
+    cursor.execute('''
+    SELECT * FROM exam_sessions
+    WHERE mode = 'full_simulation' OR total_questions = 100
+    ORDER BY created_at DESC LIMIT 1
+    ''')
+    latest_row = cursor.fetchone()
+    latest_session = dict(latest_row) if latest_row else None
+    
+    # 4. Recent sessions
+    cursor.execute('''
+    SELECT * FROM exam_sessions
+    WHERE mode = 'full_simulation' OR total_questions = 100
+    ORDER BY created_at DESC LIMIT 10
+    ''')
+    recent_rows = cursor.fetchall()
+    recent_sessions = [dict(r) for r in recent_rows]
+    
+    # 5. Mistakes and Practiced
+    cursor.execute('''
+    SELECT 
+        COUNT(*) as practiced_count,
+        SUM(CASE WHEN times_wrong > 0 THEN 1 ELSE 0 END) as mistake_count,
+        SUM(CASE WHEN mastery_level >= 2 THEN 1 ELSE 0 END) as mastered_count,
+        SUM(times_answered) as total_answers,
+        SUM(times_correct) as total_correct
+    FROM question_stats
+    ''')
+    q_stat = cursor.fetchone()
+    practiced_count = q_stat['practiced_count'] or 0
+    mistake_count = q_stat['mistake_count'] or 0
+    mastered_count = q_stat['mastered_count'] or 0
+    total_answers = q_stat['total_answers'] or 0
+    total_correct = q_stat['total_correct'] or 0
+    overall_accuracy = round((total_correct / total_answers * 100.0), 1) if total_answers > 0 else 0.0
+    
+    conn.close()
+    
+    return {
+        'total_bank_questions': total_bank,
+        'total_exams': total_exams,
+        'avg_score': avg_score,
+        'max_points': max_points,
+        'avg_points': avg_points,
+        'passed_count': passed_count,
+        'top10_count': top10_count,
+        'latest_session': latest_session,
+        'recent_sessions': recent_sessions,
+        'practiced_count': practiced_count,
+        'mistake_count': mistake_count,
+        'mastered_count': mastered_count,
+        'overall_accuracy': overall_accuracy
+    }
 
 def get_dashboard_stats(subject=None):
     conn = get_connection()

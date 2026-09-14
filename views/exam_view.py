@@ -68,31 +68,75 @@ def render_full_exam_lobby():
             st.rerun()
 
     with col2:
-        st.markdown("**📊 ข้อมูลคลังข้อสอบและสถิติรวม:**")
-        law_all = len(db.get_all_questions(subject='law'))
-        com_all = len(db.get_all_questions(subject='computer'))
+        st.markdown("**📊 สถิติการสอบจริงของคุณ (200 คะแนน):**")
+        full_stats = db.get_full_simulation_stats()
+        total_sims = full_stats['total_exams']
         
-        st.markdown(f'''<div style="background: #ffffff; border: 2px solid #1e40af; border-radius: 14px; padding: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
+        if total_sims > 0:
+            latest = full_stats['latest_session']
+            latest_pts = (latest['score'] * 2) if latest else 0
+            latest_pct = latest['percentage'] if latest else 0.0
+            latest_date = latest['created_at'] if latest else '-'
+            
+            # Badge for latest status
+            if latest_pts >= 170:
+                latest_badge = '<span style="background: #fef3c7; color: #b45309; padding: 2px 8px; border-radius: 10px; font-weight: 700; font-size: 0.78rem;">🌟 ลุ้นติด Top 10</span>'
+            elif latest_pts >= 120:
+                latest_badge = '<span style="background: #d1fae5; color: #047857; padding: 2px 8px; border-radius: 10px; font-weight: 700; font-size: 0.78rem;">✅ สอบผ่านเกณฑ์</span>'
+            else:
+                latest_badge = '<span style="background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 10px; font-weight: 700; font-size: 0.78rem;">❌ ยังไม่ผ่าน</span>'
+                
+            st.markdown(f'''<div style="background: #ffffff; border: 2px solid #d4af37; border-radius: 14px; padding: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(212, 175, 55, 0.15);">
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
-<span style="font-weight: 700; color: #1e40af; font-size: 0.95rem;">🏛️ คลังข้อสอบสำหรับจัดสอบ</span>
-<span style="background: #eff6ff; color: #1e40af; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 12px;">พร้อมสอบ 100%</span>
+<span style="font-weight: 700; color: #1e3a8a; font-size: 0.95rem;">🏆 ประวัติและผลคะแนนของคุณ</span>
+<span style="background: rgba(212, 175, 55, 0.2); color: #b45309; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 12px;">สอบไปแล้ว {total_sims} ครั้ง</span>
 </div>
 <div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
-<span style="color: #64748b;">⚖️ คลังข้อสอบกฎหมาย:</span>
-<b style="color: #1e40af; font-size: 0.95rem;">{law_all} ข้อ (สุ่ม 30 ข้อ)</b>
+<span style="color: #64748b;">🎯 คะแนนสูงสุด:</span>
+<b style="color: #059669; font-size: 0.98rem;">{full_stats['max_points']} / 200 คะแนน ({round(full_stats['max_points']/2, 1)}%)</b>
 </div>
 <div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
-<span style="color: #64748b;">💻 คลังข้อสอบคอมพิวเตอร์:</span>
-<b style="color: #0284c7; font-size: 0.95rem;">{com_all} ข้อ (สุ่ม 70 ข้อ)</b>
+<span style="color: #64748b;">📊 คะแนนเฉลี่ย:</span>
+<b style="color: #d97706; font-size: 0.95rem;">{full_stats['avg_points']} / 200 คะแนน ({full_stats['avg_score']}%)</b>
 </div>
 <div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
-<span style="color: #64748b;">💯 รวมข้อสอบในชุด:</span>
-<b style="color: #047857; font-size: 0.95rem;">100 ข้อ (200 คะแนน)</b>
+<span style="color: #64748b;">✅ สอบผ่านเกณฑ์ (120+):</span>
+<b style="color: #047857; font-size: 0.95rem;">{full_stats['passed_count']} / {total_sims} ครั้ง</b>
+</div>
+<div style="display: flex; justify-content: space-between; margin-bottom: 7px; font-size: 0.88rem;">
+<span style="color: #64748b;">🌟 ระดับ Top 10 (170+):</span>
+<b style="color: #b45309; font-size: 0.95rem;">{full_stats['top10_count']} ครั้ง</b>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; font-size: 0.88rem; padding-top: 6px; border-top: 1px dashed #e2e8f0;">
+<span style="color: #64748b;">🕒 สอบรอบล่าสุด:</span>
+<div>
+<b style="color: #1e40af; font-size: 0.95rem;">{latest_pts}/200</b> {latest_badge}
+</div>
 </div>
 <div style="display: flex; justify-content: space-between; font-size: 0.88rem;">
-<span style="color: #64748b;">⏱️ เวลามาตรฐาน:</span>
-<b style="color: #d97706; font-size: 0.95rem;">180 นาที (3 ชม.)</b>
+<span style="color: #64748b;">🔴 ข้อผิดค้างทบทวน:</span>
+<b style="color: #dc2626; font-size: 0.95rem;">{full_stats['mistake_count']} ข้อ</b>
 </div>
+</div>''', unsafe_allow_html=True)
+        else:
+            st.markdown(f'''<div style="background: #ffffff; border: 2px solid #cbd5e1; border-radius: 14px; padding: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
+<span style="font-weight: 700; color: #1e3a8a; font-size: 0.95rem;">🏆 ประวัติและผลคะแนนของคุณ</span>
+<span style="background: #f1f5f9; color: #64748b; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 12px;">ยังไม่มีประวัติ</span>
+</div>
+<div style="text-align: center; padding: 14px 0; color: #64748b; font-size: 0.9rem;">
+<span style="font-size: 2rem;">📝</span><br>
+คุณยังไม่เคยทำข้อสอบจำลองจริงชุดเต็ม 100 ข้อ<br>
+<b style="color: #1e40af;">กดปุ่มเริ่มสอบเพื่อประเมินความพร้อมและบันทึกสถิติแรกของคุณ!</b>
+</div>
+</div>''', unsafe_allow_html=True)
+            
+        # Compact Question Bank Info
+        law_all = len(db.get_all_questions(subject='law'))
+        com_all = len(db.get_all_questions(subject='computer'))
+        st.markdown(f'''<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; font-size: 0.82rem; color: #64748b; display: flex; justify-content: space-between;">
+<span>คลังข้อสอบ: <b>{law_all + com_all} ข้อ</b></span>
+<span>(กฎหมาย {law_all} + คอม {com_all})</span>
 </div>''', unsafe_allow_html=True)
 
 def render_quick_exam_lobby():

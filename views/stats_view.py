@@ -15,32 +15,40 @@ def render_stats_view():
     </div>
     ''', unsafe_allow_html=True)
     
-    # Subject Switcher for Dashboard
-    st.markdown("<p style='font-size: 1rem; font-weight: 700; color: #1e3a8a; margin-bottom: 8px;'>🎯 เลือกดูสถิติรายวิชา:</p>", unsafe_allow_html=True)
-    c1, c2, c3 = st.columns([1.5, 1.5, 1.5])
+    # Subject & Mode Switcher for Dashboard
+    st.markdown("<p style='font-size: 1rem; font-weight: 700; color: #1e3a8a; margin-bottom: 8px;'>🎯 เลือกดูสถิติและผลการประเมิน:</p>", unsafe_allow_html=True)
+    c1, c2, c3, c4 = st.columns([1.3, 1.3, 1.8, 1.3])
+    
+    view_mode = st.session_state.get('stats_view_mode', 'subject')
+    
     with c1:
-        law_type = "primary" if not is_com and st.session_state.get('stats_view_mode', 'subject') == 'subject' else "secondary"
-        if st.button("⚖️ สถิติวิชากฎหมายศาล", type=law_type, use_container_width=True, key="stats_btn_law"):
+        law_type = "primary" if not is_com and view_mode == 'subject' else "secondary"
+        if st.button("⚖️ สถิติวิชากฎหมาย", type=law_type, use_container_width=True, key="stats_btn_law"):
             st.session_state.selected_subject = 'law'
             st.session_state.stats_view_mode = 'subject'
             st.rerun()
     with c2:
-        com_type = "primary" if is_com and st.session_state.get('stats_view_mode', 'subject') == 'subject' else "secondary"
-        if st.button("💻 สถิติวิชาคอมพิวเตอร์", type=com_type, use_container_width=True, key="stats_btn_com"):
+        com_type = "primary" if is_com and view_mode == 'subject' else "secondary"
+        if st.button("💻 สถิติวิชาคอมฯ", type=com_type, use_container_width=True, key="stats_btn_com"):
             st.session_state.selected_subject = 'computer'
             st.session_state.stats_view_mode = 'subject'
             st.rerun()
     with c3:
-        is_cmp = st.session_state.get('stats_view_mode', 'subject') == 'compare'
-        cmp_type = "primary" if is_cmp else "secondary"
+        full_type = "primary" if view_mode == 'full_exam' else "secondary"
+        if st.button("🏆 สถิติสอบจริงเต็มรูปแบบ (200 คะแนน)", type=full_type, use_container_width=True, key="stats_btn_full"):
+            st.session_state.stats_view_mode = 'full_exam'
+            st.rerun()
+    with c4:
+        cmp_type = "primary" if view_mode == 'compare' else "secondary"
         if st.button("📊 เปรียบเทียบ 2 วิชา", type=cmp_type, use_container_width=True, key="stats_btn_cmp"):
             st.session_state.stats_view_mode = 'compare'
             st.rerun()
 
     st.write("")
     
-    view_mode = st.session_state.get('stats_view_mode', 'subject')
-    if view_mode == 'compare':
+    if view_mode == 'full_exam':
+        render_full_exam_dashboard()
+    elif view_mode == 'compare':
         render_comparison_dashboard()
     else:
         if is_com:
@@ -158,6 +166,95 @@ def render_subject_dashboard(subj_key, subj_name, primary_color):
                 </div>
             </div>
             ''', unsafe_allow_html=True)
+
+def render_full_exam_dashboard():
+    stats = db.get_full_simulation_stats()
+    
+    st.markdown("<h4 style='color: #d97706; margin-top: 6px;'>🏆 สถิติผลการสอบจริงเต็มรูปแบบ (200 คะแนน 180 นาที)</h4>", unsafe_allow_html=True)
+    
+    total_exams = stats['total_exams']
+    
+    # 4 Key Metrics Row
+    m1, m2, m3, m4 = st.columns(4)
+    with m1:
+        st.markdown(f'''
+        <div class="stat-card">
+            <div class="stat-label">จำลองสอบเต็มรูปแบบ</div>
+            <div class="stat-value" style="color: #1e40af;">{total_exams} <span style="font-size: 1rem; color: #94a3b8;">ครั้ง</span></div>
+            <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">ชุดละ 100 ข้อ / 180 นาที</div>
+        </div>
+        ''', unsafe_allow_html=True)
+    with m2:
+        st.markdown(f'''
+        <div class="stat-card">
+            <div class="stat-label">คะแนนสูงสุดที่ทำได้</div>
+            <div class="stat-value" style="color: #059669;">{stats['max_points']} <span style="font-size: 1rem; color: #94a3b8;">/ 200</span></div>
+            <div style="font-size: 0.78rem; color: #059669; margin-top: 2px;">{round(stats['max_points']/2, 1)}% ของคะแนนเต็ม</div>
+        </div>
+        ''', unsafe_allow_html=True)
+    with m3:
+        st.markdown(f'''
+        <div class="stat-card">
+            <div class="stat-label">คะแนนเฉลี่ยรวม</div>
+            <div class="stat-value" style="color: #d97706;">{stats['avg_points']} <span style="font-size: 1rem; color: #94a3b8;">/ 200</span></div>
+            <div style="font-size: 0.78rem; color: #d97706; margin-top: 2px;">เฉลี่ย {stats['avg_score']}%</div>
+        </div>
+        ''', unsafe_allow_html=True)
+    with m4:
+        st.markdown(f'''
+        <div class="stat-card">
+            <div class="stat-label">ผ่านเกณฑ์ / ลุ้น Top 10</div>
+            <div class="stat-value" style="color: #b45309;">{stats['passed_count']} <span style="font-size: 0.85rem; color: #64748b;">ผ่าน</span> | {stats['top10_count']} <span style="font-size: 0.85rem; color: #b45309;">Top10</span></div>
+            <div style="font-size: 0.78rem; color: #64748b; margin-top: 2px;">เกณฑ์ 120 คะแนน / 170+ คะแนน</div>
+        </div>
+        ''', unsafe_allow_html=True)
+        
+    st.write("")
+    
+    # Recent Exam Sessions Table
+    st.subheader("📜 ประวัติการจำลองสอบจริงเต็มรูปแบบย้อนหลัง")
+    history = stats['recent_sessions']
+    
+    if not history:
+        st.info("ยังไม่มีประวัติการจำลองสอบจริงเต็มรูปแบบ (200 คะแนน) กดไปที่เมนู '🏆 สอบจริงเต็มรูปแบบ' เพื่อเริ่มสอบรอบแรก")
+    else:
+        for sess in history:
+            score_pts = sess['score'] * 2
+            passed = score_pts >= 120
+            is_top10 = score_pts >= 170
+            
+            if is_top10:
+                badge = "🌟 ระดับติดกลุ่ม Top 10 (85%+)"
+                badge_color = "#d97706"
+                card_border = "2px solid #d4af37"
+            elif passed:
+                badge = "✅ ผ่านเกณฑ์มาตรฐาน (60%+)"
+                badge_color = "#059669"
+                card_border = "1.5px solid #10b981"
+            else:
+                badge = "❌ ยังไม่ผ่านเกณฑ์ (<60%)"
+                badge_color = "#dc2626"
+                card_border = "1px solid #e2e8f0"
+                
+            mins = sess['time_spent_seconds'] // 60
+            secs = sess['time_spent_seconds'] % 60
+            time_str = f"{mins:02d}:{secs:02d} นาที" if mins < 60 else f"{mins//60} ชม. {mins%60:02d} นาที"
+            
+            st.markdown(f'''
+            <div style="background: white; border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; border: {card_border}; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                <div>
+                    <span style="font-weight: 700; font-size: 1.05rem; color: #1e3a8a;">รอบที่ #{sess['id']} | สอบจริงเต็มรูปแบบ 100 ข้อ (200 คะแนน)</span><br>
+                    <span style="font-size: 0.85rem; color: #64748b;">📅 วันที่: {sess['created_at']} | ⏱️ เวลาที่ใช้: {time_str}</span>
+                </div>
+                <div style="text-align: right;">
+                    <span style="font-size: 1.35rem; font-weight: 800; color: #0f172a;">{score_pts} / 200 คะแนน</span>
+                    <span style="font-size: 0.95rem; color: #64748b;"> ({sess['percentage']}%)</span><br>
+                    <span style="font-size: 0.82rem; font-weight: 700; color: {badge_color};">{badge}</span>
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+
+    st.write("---")
 
 def render_comparison_dashboard():
     law_stats = db.get_dashboard_stats(subject='law')
