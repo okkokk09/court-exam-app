@@ -6,14 +6,15 @@ import legal_engine
 import styles
 
 def render_review_view():
-    st.markdown('''
-    <div style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%); padding: 24px 28px; border-radius: 16px; color: white; margin-bottom: 24px; border: 1px solid #818cf8;">
-        <h2 style="margin: 0 0 8px 0; color: #ffffff;">🔄 โหมดทบทวนข้อผิดซ้ำ (Mistake Review & Mastery)</h2>
-        <p style="margin: 0; color: #c7d2fe; font-size: 1rem;">
-            ระบบดึงข้อสอบที่คุณเคยตอบผิดจากฐานข้อมูล SQLite มาให้ฝึกทำซ้ำจนกว่าจะแม่นยำ ปิดจุดอ่อนก่อนลงสนามจริง
-        </p>
-    </div>
-    ''', unsafe_allow_html=True)
+    st.markdown(
+        '<div style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%); padding: 24px 28px; border-radius: 16px; color: white; margin-bottom: 24px; border: 1px solid #818cf8;">'
+        '<h2 style="margin: 0 0 8px 0; color: #ffffff;">🔄 โหมดทบทวนข้อผิดซ้ำ (Mistake Review & Mastery)</h2>'
+        '<p style="margin: 0; color: #c7d2fe; font-size: 1rem;">'
+        'ระบบดึงข้อสอบที่คุณเคยตอบผิดจากฐานข้อมูล SQLite มาให้ฝึกทำซ้ำจนกว่าจะแม่นยำ ปิดจุดอ่อนก่อนลงสนามจริง'
+        '</p>'
+        '</div>',
+        unsafe_allow_html=True
+    )
     
     # Filter selection
     subject = st.session_state.get('selected_subject', 'law')
@@ -114,42 +115,37 @@ def render_interactive_review(questions):
         is_fixed = (q.get('times_wrong', 0) == 0) or (answered_info is not None and answered_info.get('is_correct'))
         
         if is_fixed:
-            stat_badges = f'''
-            <span style="font-size: 0.85rem; color: #10b981; font-weight: 700; background: #ecfdf5; padding: 4px 12px; border-radius: 8px; border: 1px solid #a7f3d0;">
-                🎉 ซ่อมผ่านแล้ว (ปลดออกจากคลังข้อผิดเรียบร้อย ✅)
-            </span> &nbsp;|&nbsp;
-            <span style="font-size: 0.85rem; color: #10b981; font-weight: 600;">✅ ตอบถูกสะสม: {q.get('times_correct', 0)} ครั้ง</span>
-            '''
+            stat_badges = (
+                f'<span style="font-size: 0.85rem; color: #10b981; font-weight: 700; background: #ecfdf5; padding: 4px 12px; border-radius: 8px; border: 1px solid #a7f3d0;">'
+                f'🎉 ซ่อมผ่านแล้ว (ปลดออกจากคลังข้อผิดเรียบร้อย ✅)</span> &nbsp;|&nbsp; '
+                f'<span style="font-size: 0.85rem; color: #10b981; font-weight: 600;">✅ ตอบถูกสะสม: {q.get("times_correct", 0)} ครั้ง</span>'
+            )
         else:
-            stat_badges = f'''
-            <span style="font-size: 0.85rem; color: #ef4444; font-weight: 600;">❌ เคยตอบผิด: {q.get('times_wrong', 0)} ครั้ง</span> &nbsp;|&nbsp;
-            <span style="font-size: 0.85rem; color: #10b981; font-weight: 600;">✅ เคยตอบถูก: {q.get('times_correct', 0)} ครั้ง</span>
-            '''
+            stat_badges = (
+                f'<span style="font-size: 0.85rem; color: #ef4444; font-weight: 600;">❌ เคยตอบผิด: {q.get("times_wrong", 0)} ครั้ง</span> &nbsp;|&nbsp; '
+                f'<span style="font-size: 0.85rem; color: #10b981; font-weight: 600;">✅ เคยตอบถูก: {q.get("times_correct", 0)} ครั้ง</span>'
+            )
 
-        st.markdown(f'''
-        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 18px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
-            <div>
-                <span style="font-weight: 700; color: #1e3a8a;">ข้อที่ {idx + 1} จาก {total}</span>
-                <span class="q-category-tag" style="margin-left: 8px;">{q.get('category', 'ทั่วไป')}</span>
-            </div>
-            <div>
-                {stat_badges}
-            </div>
-        </div>
-        ''', unsafe_allow_html=True)
+        cat_badge = f'<span class="q-category-tag" style="margin-left: 8px;">{q.get("category", "ทั่วไป")}</span>'
+        header_html = (
+            f'<div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 18px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px;">'
+            f'<div><span style="font-weight: 700; color: #1e3a8a;">ข้อที่ {idx + 1} จาก {total}</span>{cat_badge}</div>'
+            f'<div>{stat_badges}</div>'
+            f'</div>'
+        )
+        st.markdown(header_html, unsafe_allow_html=True)
         
         # Progress
         ans_count = len(review_answers)
         st.progress((idx + 1) / total, text=f"กำลังทำข้อที่ {idx + 1}/{total} (ตอบเสร็จแล้ว {ans_count}/{total} ข้อ)")
         
         # Question Card
-        st.markdown(f'''
-        <div class="question-card" style="border-left: 5px solid #ef4444;">
-            <div class="q-text" style="margin-bottom: 16px;">
-                {q['question']}
-            </div>
-        </div>
-        ''', unsafe_allow_html=True)
+        st.markdown(
+            f'<div class="question-card" style="border-left: 5px solid #ef4444;">'
+            f'<div class="q-text" style="margin-bottom: 16px;">{q["question"]}</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
         
         options = q['options']
         choice_letters = styles.get_choice_letters()
@@ -210,19 +206,22 @@ def render_interactive_review(questions):
                 elif c_idx == user_choice:
                     st.error(f"**{c_letter}.**  {opt}  *(คุณเลือกข้อนี้ ❌)*")
                 else:
-                    st.markdown(f'''
-                    <div style="padding: 10px 14px; background: #f8fafc; border-radius: 8px; margin-bottom: 6px; border: 1px solid #e2e8f0; color: #475569; font-size: 0.95rem;">
-                        <b>{c_letter}.</b> {opt}
-                    </div>
-                    ''', unsafe_allow_html=True)
+                    st.markdown(
+                        f'<div style="padding: 10px 14px; background: #f8fafc; border-radius: 8px; margin-bottom: 6px; border: 1px solid #e2e8f0; color: #475569; font-size: 0.95rem;">'
+                        f'<b>{c_letter}.</b> {opt}</div>',
+                        unsafe_allow_html=True
+                    )
                     
             # Explanation Box
-            st.markdown(f'''
-            <div class="{'explanation-box' if is_correct else 'explanation-wrong-box'}">
-                <span class="law-ref-pill">📖 อ้างอิง: {q.get('law_ref', 'พ.ร.บ.ระเบียบบริหารราชการศาลยุติธรรม')}</span><br>
-                <b>เหตุผลและคำอธิบาย:</b> {q.get('explanation', '')}
-            </div>
-            ''', unsafe_allow_html=True)
+            exp_box_class = 'explanation-box' if is_correct else 'explanation-wrong-box'
+            law_ref_text = q.get('law_ref', 'พ.ร.บ.ระเบียบบริหารราชการศาลยุติธรรม')
+            exp_text = q.get('explanation', '')
+            st.markdown(
+                f'<div class="{exp_box_class}">'
+                f'<span class="law-ref-pill">📖 อ้างอิง: {law_ref_text}</span><br>'
+                f'<b>เหตุผลและคำอธิบาย:</b> {exp_text}</div>',
+                unsafe_allow_html=True
+            )
             
             # Legal References & Precedents Engine
             legal_engine.render_legal_reference_expander(q, expanded=True)
@@ -253,14 +252,15 @@ def render_interactive_review(questions):
         st.markdown("<h4 style='margin: 0 0 10px 0;'>📌 แผงเลือกข้อทบทวน</h4>", unsafe_allow_html=True)
         
         # Legend
-        st.markdown('''
-        <div style="font-size: 0.78rem; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; background: rgba(0,0,0,0.04); padding: 8px 12px; border-radius: 8px;">
-            <span>🔵 <b>กำลังทำ</b></span>
-            <span>🟢 <b>แก้ถูก</b></span>
-            <span>🔴 <b>ยังผิด</b></span>
-            <span>⚪ <b>ยังไม่ทำ</b></span>
-        </div>
-        ''', unsafe_allow_html=True)
+        st.markdown(
+            '<div style="font-size: 0.78rem; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; background: rgba(0,0,0,0.04); padding: 8px 12px; border-radius: 8px;">'
+            '<span>🔵 <b>กำลังทำ</b></span> '
+            '<span>🟢 <b>แก้ถูก</b></span> '
+            '<span>🔴 <b>ยังผิด</b></span> '
+            '<span>⚪ <b>ยังไม่ทำ</b></span>'
+            '</div>',
+            unsafe_allow_html=True
+        )
         
         # Grid of questions
         grid_cols = st.columns(5)
@@ -287,28 +287,18 @@ def render_interactive_review(questions):
         correct_count = sum(1 for a in review_answers.values() if a['is_correct'])
         wrong_count = sum(1 for a in review_answers.values() if not a['is_correct'])
         acc = int((correct_count / ans_count * 100)) if ans_count > 0 else 0
+        acc_color = '#10b981' if acc >= 60 else '#ef4444'
         
-        st.markdown(f'''
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 12px;">
-            <div style="font-weight: 700; color: #4338ca; margin-bottom: 8px; font-size: 0.9rem;">🎯 สรุปผลการซ่อมข้อผิด</div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
-                <span style="color: #64748b;">ทบทวนแล้ว:</span>
-                <b style="color: #0f172a;">{ans_count} / {total} ข้อ</b>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
-                <span style="color: #10b981;">แก้ไขถูก:</span>
-                <b style="color: #10b981;">{correct_count} ข้อ</b>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
-                <span style="color: #ef4444;">ยังผิดอยู่:</span>
-                <b style="color: #ef4444;">{wrong_count} ข้อ</b>
-            </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-                <span style="color: #64748b;">อัตราแก้สำเร็จ:</span>
-                <b style="color: {'#10b981' if acc >= 60 else '#ef4444'};">{acc}%</b>
-            </div>
-        </div>
-        ''', unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 12px;">'
+            f'<div style="font-weight: 700; color: #4338ca; margin-bottom: 8px; font-size: 0.9rem;">🎯 สรุปผลการซ่อมข้อผิด</div>'
+            f'<div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;"><span style="color: #64748b;">ทบทวนแล้ว:</span><b style="color: #0f172a;">{ans_count} / {total} ข้อ</b></div>'
+            f'<div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;"><span style="color: #10b981;">แก้ไขถูก:</span><b style="color: #10b981;">{correct_count} ข้อ</b></div>'
+            f'<div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;"><span style="color: #ef4444;">ยังผิดอยู่:</span><b style="color: #ef4444;">{wrong_count} ข้อ</b></div>'
+            f'<div style="display: flex; justify-content: space-between; font-size: 0.85rem;"><span style="color: #64748b;">อัตราแก้สำเร็จ:</span><b style="color: {acc_color};">{acc}%</b></div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
 
         if ans_count == total and total > 0:
             st.success(f"🎉 **ซ่อมครบทั้ง {total} ข้อแล้ว!** (แก้ถูก {correct_count} ข้อ)")
@@ -341,12 +331,14 @@ def render_flashcards_view(questions):
                 else:
                     st.write(f"**{c_letter}.** {opt}")
                     
-            st.markdown(f'''
-            <div class="explanation-box">
-                <span class="law-ref-pill">📖 อ้างอิง: {q.get('law_ref', 'พ.ร.บ.ระเบียบบริหารราชการศาลยุติธรรม')}</span><br>
-                <b>คำอธิบาย:</b> {q.get('explanation', '')}
-            </div>
-            ''', unsafe_allow_html=True)
+            exp_ref = q.get('law_ref', 'พ.ร.บ.ระเบียบบริหารราชการศาลยุติธรรม')
+            exp_detail = q.get('explanation', '')
+            st.markdown(
+                f'<div class="explanation-box">'
+                f'<span class="law-ref-pill">📖 อ้างอิง: {exp_ref}</span><br>'
+                f'<b>คำอธิบาย:</b> {exp_detail}</div>',
+                unsafe_allow_html=True
+            )
             
             # Legal References & Precedents Engine
             legal_engine.render_legal_reference_expander(q, expanded=False)
