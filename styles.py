@@ -439,6 +439,30 @@ def get_custom_css(theme_key='court_navy'):
         transition: all 0.2s ease;
     }}
 
+    /* Primary Action & Active Navigator Buttons (Fix Streamlit red default) */
+    .stButton > button[kind="primary"],
+    div[data-testid="stButton"] > button[kind="primary"],
+    div[data-testid="stButton"] > button[data-testid="baseButton-primary"] {{
+        background-color: {t['primary_color']} !important;
+        border-color: {t['primary_color']} !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    }}
+
+    .stButton > button[kind="primary"]:hover,
+    div[data-testid="stButton"] > button[kind="primary"]:hover,
+    div[data-testid="stButton"] > button[data-testid="baseButton-primary"]:hover {{
+        background-color: {t['primary_color']} !important;
+        opacity: 0.92 !important;
+        border-color: {t['primary_color']} !important;
+        color: #ffffff !important;
+    }}
+
+    .stButton > button[kind="primary"]:focus,
+    div[data-testid="stButton"] > button[kind="primary"]:focus {{
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35) !important;
+    }}
+
     /* Choice Option Buttons in Practice & Review */
     div[data-testid="stButton"] > button:has(strong),
     div[data-testid="stButton"] > button:has(p strong) {{

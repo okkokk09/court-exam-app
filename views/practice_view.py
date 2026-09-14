@@ -197,12 +197,12 @@ def render_practice_view():
         
         # Legend
         st.markdown('''
-        <div style="font-size: 0.78rem; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-            <span>🔵 กำลังทำ</span>
-            <span>🟢 ถูก</span>
-            <span>🔴 ผิด</span>
-            <span>⚪ ยังไม่ตอบ</span>
-            <span>🚩 หมุด</span>
+        <div style="font-size: 0.78rem; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; background: rgba(0,0,0,0.04); padding: 8px 12px; border-radius: 8px;">
+            <span>🔵 <b>กำลังทำ</b></span>
+            <span>🟢 <b>ถูก</b></span>
+            <span>🔴 <b>ผิด</b></span>
+            <span>⚪ <b>ยังไม่ตอบ</b></span>
+            <span>🚩 <b>หมุด</b></span>
         </div>
         ''', unsafe_allow_html=True)
         
@@ -217,7 +217,9 @@ def render_practice_view():
             if is_q_bm:
                 label = f"{i+1}🚩"
             elif ans_info is not None:
-                label = f"{i+1}✅" if ans_info['is_correct'] else f"{i+1}❌"
+                label = f"{i+1}🟢" if ans_info['is_correct'] else f"{i+1}🔴"
+            elif is_cur:
+                label = f"{i+1}🔵"
             else:
                 label = f"{i+1}⚪"
                 
@@ -239,7 +241,7 @@ def render_practice_view():
             <div style="font-weight: 700; color: #047857; margin-bottom: 8px; font-size: 0.9rem;">📊 สรุปการฝึกทำชุดนี้</div>
             <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
                 <span style="color: #64748b;">ทำแล้ว:</span>
-                <b>{ans_count} / {total} ข้อ</b>
+                <b style="color: #0f172a;">{ans_count} / {total} ข้อ</b>
             </div>
             <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
                 <span style="color: #10b981;">ตอบถูก:</span>

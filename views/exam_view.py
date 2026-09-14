@@ -249,6 +249,8 @@ def render_exam_in_progress():
                 label = f"{i+1}🚩"
             elif is_ans:
                 label = f"{i+1}🟢"
+            elif is_cur:
+                label = f"{i+1}🔵"
             else:
                 label = f"{i+1}⚪"
                 

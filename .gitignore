@@ -29,6 +29,7 @@ wheels/
 # Temp / Debug
 debug_pdf.txt
 *.log
+ข้อสอบประจำเดือน*.pdf
 
 # OS
 .DS_Store

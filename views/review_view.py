@@ -30,7 +30,7 @@ def render_review_view():
         ('all_mistakes', '📚 ข้อที่เคยตอบผิดทั้งหมด (All Logged Mistakes)')
     ])
     
-    col_f1, col_f2 = st.columns([2, 1])
+    col_f1, col_f2, col_f3 = st.columns([2, 1, 1])
     with col_f1:
         filter_opt = st.selectbox(
             "🎯 ตัวกรองข้อผิด:",
@@ -42,9 +42,19 @@ def render_review_view():
         
     with col_f2:
         limit_count = st.number_input("จำนวนข้อที่ต้องการดึง:", min_value=5, max_value=100, value=20, step=5)
+
+    with col_f3:
+        st.write("")
+        st.write("")
+        if st.button("🔄 รีเฟรชข้อสอบ", use_container_width=True, help="ล้างแคชและดึงสถิติล่าสุดจากฐานข้อมูล"):
+            if 'review_current_state' in st.session_state:
+                del st.session_state['review_current_state']
+            if 'review_loaded_qs' in st.session_state:
+                del st.session_state['review_loaded_qs']
+            st.rerun()
         
     # Reload & shuffle mistake questions if filter/subject changes
-    review_state_key = (filter_type, limit_count, subject, len(session_mistakes))
+    review_state_key = (filter_type, limit_count, subject)
     if st.session_state.get('review_current_state') != review_state_key or 'review_loaded_qs' not in st.session_state:
         if filter_type == 'session_mistakes':
             raw_mistakes = list(session_mistakes)
@@ -114,7 +124,8 @@ def render_interactive_review(questions):
         ''', unsafe_allow_html=True)
         
         # Progress
-        st.progress((idx + 1) / total, text=f"ทบทวนไปแล้ว {idx + 1}/{total} ข้อ")
+        ans_count = len(review_answers)
+        st.progress((idx + 1) / total, text=f"กำลังทำข้อที่ {idx + 1}/{total} (ตอบเสร็จแล้ว {ans_count}/{total} ข้อ)")
         
         # Question Card
         st.markdown(f'''
@@ -139,6 +150,14 @@ def render_interactive_review(questions):
                 if st.button(f"**{c_letter}.**  {opt}", key=f"rev_btn_{q['id']}_{idx}_{c_idx}", use_container_width=True):
                     is_correct = (c_idx == correct_idx)
                     db.record_answer(q['id'], c_idx, is_correct)
+                    # Update in-memory question stats immediately so user sees live update!
+                    if is_correct:
+                        q['times_correct'] = q.get('times_correct', 0) + 1
+                        if 'mistakes' in st.session_state:
+                            st.session_state.mistakes = [m for m in st.session_state.mistakes if m.get('id') != q['id']]
+                    else:
+                        q['times_wrong'] = q.get('times_wrong', 0) + 1
+                        
                     st.session_state.review_answers[idx] = {'selected': c_idx, 'is_correct': is_correct}
                     st.rerun()
                     
@@ -155,6 +174,11 @@ def render_interactive_review(questions):
         else:
             user_choice = answered_info['selected']
             is_correct = answered_info['is_correct']
+            
+            if is_correct:
+                st.success("🎉 **ยอดเยี่ยมมาก! คุณซ่อมข้อนี้ถูกต้องแล้ว** (ระบบอัปเดตสถิติลงฐานข้อมูลเรียบร้อย ✅)")
+            else:
+                st.error(f"❌ **ยังไม่ถูกต้อง** (เฉลยที่ถูกต้องคือ: **{choice_letters[correct_idx]}. {options[correct_idx]}**)")
             
             st.markdown("<p style='font-size: 1rem; font-weight: 600; color: #4338ca; margin-bottom: 10px;'>🎯 ผลการตรวจคำตอบ:</p>", unsafe_allow_html=True)
             for c_idx, opt in enumerate(options):
@@ -204,11 +228,11 @@ def render_interactive_review(questions):
         
         # Legend
         st.markdown('''
-        <div style="font-size: 0.78rem; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-            <span>🔵 กำลังทำ</span>
-            <span>🟢 แก้ถูก</span>
-            <span>🔴 ยังผิด</span>
-            <span>⚪ ยังไม่ทำ</span>
+        <div style="font-size: 0.78rem; display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; background: rgba(0,0,0,0.04); padding: 8px 12px; border-radius: 8px;">
+            <span>🔵 <b>กำลังทำ</b></span>
+            <span>🟢 <b>แก้ถูก</b></span>
+            <span>🔴 <b>ยังผิด</b></span>
+            <span>⚪ <b>ยังไม่ทำ</b></span>
         </div>
         ''', unsafe_allow_html=True)
         
@@ -219,7 +243,9 @@ def render_interactive_review(questions):
             is_cur = (i == idx)
             ans_info = review_answers.get(i, None)
             if ans_info is not None:
-                label = f"{i+1}✅" if ans_info['is_correct'] else f"{i+1}❌"
+                label = f"{i+1}🟢" if ans_info['is_correct'] else f"{i+1}🔴"
+            elif is_cur:
+                label = f"{i+1}🔵"
             else:
                 label = f"{i+1}⚪"
                 
@@ -241,7 +267,7 @@ def render_interactive_review(questions):
             <div style="font-weight: 700; color: #4338ca; margin-bottom: 8px; font-size: 0.9rem;">🎯 สรุปผลการซ่อมข้อผิด</div>
             <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
                 <span style="color: #64748b;">ทบทวนแล้ว:</span>
-                <b>{ans_count} / {total} ข้อ</b>
+                <b style="color: #0f172a;">{ans_count} / {total} ข้อ</b>
             </div>
             <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
                 <span style="color: #10b981;">แก้ไขถูก:</span>
@@ -257,6 +283,22 @@ def render_interactive_review(questions):
             </div>
         </div>
         ''', unsafe_allow_html=True)
+
+        if ans_count == total and total > 0:
+            st.success(f"🎉 **ซ่อมครบทั้ง {total} ข้อแล้ว!** (แก้ถูก {correct_count} ข้อ)")
+            if wrong_count > 0:
+                if st.button(f"🔁 ทำซ้ำเฉพาะข้อที่ยังผิด ({wrong_count} ข้อ)", type="primary", use_container_width=True, key="rev_retry_wrongs"):
+                    wrong_indices = [i for i, a in review_answers.items() if not a['is_correct']]
+                    st.session_state.review_loaded_qs = [questions[i] for i in wrong_indices]
+                    st.session_state.review_answers = {}
+                    st.session_state.review_q_idx = 0
+                    st.rerun()
+            if st.button("🔄 ดึงข้อผิดชุดใหม่", use_container_width=True, key="rev_load_fresh"):
+                if 'review_current_state' in st.session_state:
+                    del st.session_state['review_current_state']
+                if 'review_loaded_qs' in st.session_state:
+                    del st.session_state['review_loaded_qs']
+                st.rerun()
 
 def render_flashcards_view(questions):
     st.markdown("คลิกที่แต่ละข้อเพื่อเปิดดูเฉลย คำอธิบาย และมาตรากฎหมายอ้างอิง")
