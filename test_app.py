@@ -5,9 +5,28 @@ import json
 import db
 import quiz_engine
 
+TEST_DB_PATH = os.path.join(os.path.dirname(__file__), 'test_exam_data_runner.db')
+
 class TestQuizApp(unittest.TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
+        cls.orig_db_path = db.DB_PATH
+        db.DB_PATH = TEST_DB_PATH
+        if os.path.exists(TEST_DB_PATH):
+            os.remove(TEST_DB_PATH)
         db.init_db()
+
+    @classmethod
+    def tearDownClass(cls):
+        db.DB_PATH = cls.orig_db_path
+        if os.path.exists(TEST_DB_PATH):
+            try:
+                os.remove(TEST_DB_PATH)
+            except Exception:
+                pass
+
+    def setUp(self):
+        pass
         
     def test_database_questions(self):
         questions = db.get_all_questions()
