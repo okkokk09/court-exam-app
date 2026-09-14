@@ -123,13 +123,12 @@ def render_interactive_review(questions):
         else:
             stat_badges = (
                 f'<span style="font-size: 0.85rem; color: #ef4444; font-weight: 600;">❌ เคยตอบผิด: {q.get("times_wrong", 0)} ครั้ง</span> &nbsp;|&nbsp; '
-                f'<span style="font-size: 0.85rem; color: #10b981; font-weight: 600;">✅ เคยตอบถูก: {q.get("times_correct", 0)} ครั้ง</span>'
+                f'<span style="font-size: 0.85rem; color: #10b981; font-weight: 600;">✅ ตอบถูกสะสม: {q.get("times_correct", 0)} ครั้ง</span>'
             )
 
-        cat_badge = f'<span class="q-category-tag" style="margin-left: 8px;">{q.get("category", "ทั่วไป")}</span>'
         header_html = (
             f'<div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 18px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px;">'
-            f'<div><span style="font-weight: 700; color: #1e3a8a;">ข้อที่ {idx + 1} จาก {total}</span>{cat_badge}</div>'
+            f'<div><span style="font-weight: 700; color: #1e3a8a;">ข้อที่ {idx + 1} จาก {total}</span></div>'
             f'<div>{stat_badges}</div>'
             f'</div>'
         )

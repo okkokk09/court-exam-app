@@ -87,8 +87,6 @@ def render_practice_view():
         <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 18px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
             <div>
                 <span style="font-weight: 700; color: #047857;">ข้อที่ {idx + 1} จาก {total}</span>
-                <span class="q-category-tag" style="margin-left: 8px;">{q.get('category', 'ทั่วไป')}</span>
-                <span style="font-size: 0.85rem; color: #64748b; margin-left: 8px;">[{q.get('topic', '')}]</span>
             </div>
             <div>
                 <span style="font-size: 0.85rem; color: #64748b;">ID: {q['id']}</span>

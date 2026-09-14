@@ -166,7 +166,6 @@ def render_exam_in_progress():
             <div class="question-header">
                 <div>
                     <span class="q-number">ข้อที่ {current_idx + 1}</span>
-                    <span class="q-category-tag" style="margin-left: 8px;">{q.get('category', 'ทั่วไป')}</span>
                 </div>
                 <div style="font-size: 0.85rem; color: #94a3b8;">
                     ID: {q['id']}
