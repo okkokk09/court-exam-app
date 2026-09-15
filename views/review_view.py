@@ -233,7 +233,7 @@ def render_interactive_review(questions):
             )
             
             # Legal References & Precedents Engine
-            legal_engine.render_legal_reference_expander(q, expanded=True)
+            legal_engine.render_legal_reference_expander(q, expanded=False)
             
             st.write("")
             c_btn1, c_btn2, c_btn3, c_btn4 = st.columns([1, 1.4, 1, 1.2])

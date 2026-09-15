@@ -174,7 +174,7 @@ def render_practice_view():
             ''', unsafe_allow_html=True)
             
             # Legal References & Precedents Engine
-            legal_engine.render_legal_reference_expander(q, expanded=True)
+            legal_engine.render_legal_reference_expander(q, expanded=False)
             
             st.write("")
             c1, c2, c3, c4 = st.columns([1, 1.5, 1, 1])
