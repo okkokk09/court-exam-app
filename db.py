@@ -40,10 +40,11 @@ def init_db():
     except Exception:
         pass
     
-    # 2. Exam sessions history
+    # 2. Exam sessions history with username column
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS exam_sessions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT DEFAULT 'User 1',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         subject TEXT DEFAULT 'law',
         mode TEXT,
@@ -61,31 +62,92 @@ def init_db():
         conn.commit()
     except Exception:
         pass
+        
+    try:
+        cursor.execute("ALTER TABLE exam_sessions ADD COLUMN username TEXT DEFAULT 'User 1'")
+        conn.commit()
+    except Exception:
+        pass
     
-    # 3. Question statistics
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS question_stats (
-        question_id TEXT PRIMARY KEY,
-        times_answered INTEGER DEFAULT 0,
-        times_correct INTEGER DEFAULT 0,
-        times_wrong INTEGER DEFAULT 0,
-        wrong_options_json TEXT DEFAULT '{}',
-        last_answered_at TIMESTAMP,
-        last_result INTEGER,
-        mastery_level INTEGER DEFAULT 0,
-        FOREIGN KEY (question_id) REFERENCES questions (id)
-    )
-    ''')
+    # 3. Question statistics with (username, question_id) composite primary key
+    cursor.execute("PRAGMA table_info(question_stats)")
+    q_stats_cols = [r['name'] for r in cursor.fetchall()]
+    if not q_stats_cols:
+        cursor.execute('''
+        CREATE TABLE question_stats (
+            question_id TEXT,
+            username TEXT DEFAULT 'User 1',
+            times_answered INTEGER DEFAULT 0,
+            times_correct INTEGER DEFAULT 0,
+            times_wrong INTEGER DEFAULT 0,
+            wrong_options_json TEXT DEFAULT '{}',
+            last_answered_at TIMESTAMP,
+            last_result INTEGER,
+            mastery_level INTEGER DEFAULT 0,
+            PRIMARY KEY (username, question_id),
+            FOREIGN KEY (question_id) REFERENCES questions (id)
+        )
+        ''')
+        conn.commit()
+    elif 'username' not in q_stats_cols:
+        cursor.execute('''
+        CREATE TABLE question_stats_new (
+            question_id TEXT,
+            username TEXT DEFAULT 'User 1',
+            times_answered INTEGER DEFAULT 0,
+            times_correct INTEGER DEFAULT 0,
+            times_wrong INTEGER DEFAULT 0,
+            wrong_options_json TEXT DEFAULT '{}',
+            last_answered_at TIMESTAMP,
+            last_result INTEGER,
+            mastery_level INTEGER DEFAULT 0,
+            PRIMARY KEY (username, question_id),
+            FOREIGN KEY (question_id) REFERENCES questions (id)
+        )
+        ''')
+        cursor.execute('''
+        INSERT INTO question_stats_new (question_id, username, times_answered, times_correct, times_wrong, wrong_options_json, last_answered_at, last_result, mastery_level)
+        SELECT question_id, 'User 1', times_answered, times_correct, times_wrong, wrong_options_json, last_answered_at, last_result, mastery_level
+        FROM question_stats
+        ''')
+        cursor.execute("DROP TABLE question_stats")
+        cursor.execute("ALTER TABLE question_stats_new RENAME TO question_stats")
+        conn.commit()
     
-    # 4. Bookmarks table
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS user_bookmarks (
-        question_id TEXT PRIMARY KEY,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        note TEXT,
-        FOREIGN KEY (question_id) REFERENCES questions (id)
-    )
-    ''')
+    # 4. Bookmarks table with (username, question_id) composite primary key
+    cursor.execute("PRAGMA table_info(user_bookmarks)")
+    bm_cols = [r['name'] for r in cursor.fetchall()]
+    if not bm_cols:
+        cursor.execute('''
+        CREATE TABLE user_bookmarks (
+            question_id TEXT,
+            username TEXT DEFAULT 'User 1',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            note TEXT,
+            PRIMARY KEY (username, question_id),
+            FOREIGN KEY (question_id) REFERENCES questions (id)
+        )
+        ''')
+        conn.commit()
+    elif 'username' not in bm_cols:
+        cursor.execute('''
+        CREATE TABLE user_bookmarks_new (
+            question_id TEXT,
+            username TEXT DEFAULT 'User 1',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            note TEXT,
+            PRIMARY KEY (username, question_id),
+            FOREIGN KEY (question_id) REFERENCES questions (id)
+        )
+        ''')
+        cursor.execute('''
+        INSERT INTO user_bookmarks_new (question_id, username, created_at, note)
+        SELECT question_id, 'User 1', created_at, note
+        FROM user_bookmarks
+        ''')
+        cursor.execute("DROP TABLE user_bookmarks")
+        cursor.execute("ALTER TABLE user_bookmarks_new RENAME TO user_bookmarks")
+        conn.commit()
     
     conn.commit()
     conn.close()
@@ -222,7 +284,7 @@ def get_full_simulation_questions(law_count=30, computer_count=70):
     com_qs = get_random_questions(count=computer_count, subject='computer')
     return law_qs + com_qs
 
-def get_mistake_questions(limit=50, filter_type='all_mistakes', subject=None):
+def get_mistake_questions(limit=50, filter_type='all_mistakes', subject=None, username='User 1'):
     '''
     filter_type options:
     - 'all_mistakes': Any question with times_wrong > 0
@@ -230,6 +292,7 @@ def get_mistake_questions(limit=50, filter_type='all_mistakes', subject=None):
     - 'recent_mistakes': Questions where last_result == 0
     - 'unmastered': Questions with times_wrong > times_correct
     '''
+    user = username or 'User 1'
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -237,9 +300,9 @@ def get_mistake_questions(limit=50, filter_type='all_mistakes', subject=None):
     SELECT q.*, s.times_answered, s.times_correct, s.times_wrong, s.wrong_options_json, s.last_result, s.mastery_level
     FROM questions q
     JOIN question_stats s ON q.id = s.question_id
-    WHERE s.times_wrong > 0
+    WHERE s.times_wrong > 0 AND (s.username = ? OR (s.username IS NULL AND ? = 'User 1'))
     '''
-    params = []
+    params = [user, user]
     if subject:
         query += " AND (q.subject = ? OR (q.subject IS NULL AND ? = 'law'))"
         params.extend([subject, subject])
@@ -295,14 +358,18 @@ def get_all_categories(subject=None):
     conn.close()
     return [(r['category'], r['count']) for r in rows]
 
-def record_answer(question_id, selected_index, is_correct, clear_mistake_on_correct=False):
+def record_answer(question_id, selected_index, is_correct, clear_mistake_on_correct=False, username='User 1'):
+    user = username or 'User 1'
     conn = get_connection()
     cursor = conn.cursor()
     
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
-    # Get existing stats
-    cursor.execute('SELECT * FROM question_stats WHERE question_id = ?', (question_id,))
+    # Get existing stats for (username, question_id)
+    cursor.execute('''
+    SELECT * FROM question_stats 
+    WHERE question_id = ? AND (username = ? OR (username IS NULL AND ? = 'User 1'))
+    ''', (question_id, user, user))
     row = cursor.fetchone()
     
     if row:
@@ -332,9 +399,9 @@ def record_answer(question_id, selected_index, is_correct, clear_mistake_on_corr
         cursor.execute('''
         UPDATE question_stats
         SET times_answered = ?, times_correct = ?, times_wrong = ?,
-            wrong_options_json = ?, last_answered_at = ?, last_result = ?, mastery_level = ?
-        WHERE question_id = ?
-        ''', (times_answered, times_correct, times_wrong, json.dumps(wrong_opts), now, 1 if is_correct else 0, mastery, question_id))
+            wrong_options_json = ?, last_answered_at = ?, last_result = ?, mastery_level = ?, username = ?
+        WHERE question_id = ? AND (username = ? OR (username IS NULL AND ? = 'User 1'))
+        ''', (times_answered, times_correct, times_wrong, json.dumps(wrong_opts), now, 1 if is_correct else 0, mastery, user, question_id, user, user))
     else:
         wrong_opts = {}
         if not is_correct and selected_index is not None:
@@ -343,26 +410,28 @@ def record_answer(question_id, selected_index, is_correct, clear_mistake_on_corr
         times_wrong = 0 if is_correct else 1
         
         cursor.execute('''
-        INSERT INTO question_stats (question_id, times_answered, times_correct, times_wrong, wrong_options_json, last_answered_at, last_result, mastery_level)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (question_id, 1, 1 if is_correct else 0, times_wrong, json.dumps(wrong_opts), now, 1 if is_correct else 0, mastery))
+        INSERT INTO question_stats (question_id, username, times_answered, times_correct, times_wrong, wrong_options_json, last_answered_at, last_result, mastery_level)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (question_id, user, 1, 1 if is_correct else 0, times_wrong, json.dumps(wrong_opts), now, 1 if is_correct else 0, mastery))
         
     conn.commit()
     conn.close()
 
-def clear_question_mistake(question_id):
+def clear_question_mistake(question_id, username='User 1'):
     '''Clears mistake record for a specific question so it no longer appears in Mistake Bank'''
+    user = username or 'User 1'
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('''
     UPDATE question_stats
     SET times_wrong = 0, last_result = 1, mastery_level = MAX(mastery_level, 2)
-    WHERE question_id = ?
-    ''', (question_id,))
+    WHERE question_id = ? AND (username = ? OR (username IS NULL AND ? = 'User 1'))
+    ''', (question_id, user, user))
     conn.commit()
     conn.close()
 
-def save_exam_session(mode, category, total_q, score, time_spent_seconds, answers_detail, subject='law'):
+def save_exam_session(mode, category, total_q, score, time_spent_seconds, answers_detail, subject='law', username='User 1'):
+    user = username or 'User 1'
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -370,25 +439,26 @@ def save_exam_session(mode, category, total_q, score, time_spent_seconds, answer
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
     cursor.execute('''
-    INSERT INTO exam_sessions (created_at, subject, mode, category, total_questions, score, percentage, time_spent_seconds, answers_json)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (now, subject, mode, category, total_q, score, round(percentage, 2), time_spent_seconds, json.dumps(answers_detail, ensure_ascii=False)))
+    INSERT INTO exam_sessions (username, created_at, subject, mode, category, total_questions, score, percentage, time_spent_seconds, answers_json)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (user, now, subject, mode, category, total_q, score, round(percentage, 2), time_spent_seconds, json.dumps(answers_detail, ensure_ascii=False)))
     
     session_id = cursor.lastrowid
     conn.commit()
     conn.close()
     
-    # Also record individual question stats
+    # Also record individual question stats for this user
     for qid, detail in answers_detail.items():
-        record_answer(qid, detail.get('selected'), detail.get('is_correct', False))
+        record_answer(qid, detail.get('selected'), detail.get('is_correct', False), username=user)
         
     return session_id
 
-def get_exam_history(limit=20, subject=None, mode=None):
+def get_exam_history(limit=20, subject=None, mode=None, username='User 1'):
+    user = username or 'User 1'
     conn = get_connection()
     cursor = conn.cursor()
-    conditions = []
-    params = []
+    conditions = ["(username = ? OR (username IS NULL AND ? = 'User 1'))"]
+    params = [user, user]
     
     if mode:
         conditions.append("mode = ?")
@@ -404,15 +474,16 @@ def get_exam_history(limit=20, subject=None, mode=None):
     conn.close()
     return [dict(r) for r in rows]
 
-def get_full_simulation_stats():
+def get_full_simulation_stats(username='User 1'):
+    user = username or 'User 1'
     conn = get_connection()
     cursor = conn.cursor()
     
-    # 1. Total questions in bank
+    # 1. Total questions in bank (global)
     cursor.execute('SELECT COUNT(*) as count FROM questions')
     total_bank = cursor.fetchone()['count']
     
-    # 2. Full simulation sessions
+    # 2. Full simulation sessions for this user
     cursor.execute('''
     SELECT 
         COUNT(*) as total_exams,
@@ -423,8 +494,9 @@ def get_full_simulation_stats():
         SUM(CASE WHEN (score * 2) >= 120 THEN 1 ELSE 0 END) as passed_count,
         SUM(CASE WHEN (score * 2) >= 170 THEN 1 ELSE 0 END) as top10_count
     FROM exam_sessions
-    WHERE mode = 'full_simulation' OR total_questions = 100
-    ''')
+    WHERE (mode = 'full_simulation' OR total_questions = 100)
+      AND (username = ? OR (username IS NULL AND ? = 'User 1'))
+    ''', (user, user))
     stat_row = cursor.fetchone()
     total_exams = stat_row['total_exams'] or 0
     avg_score = round(stat_row['avg_score'] or 0.0, 1)
@@ -436,22 +508,24 @@ def get_full_simulation_stats():
     # 3. Latest session
     cursor.execute('''
     SELECT * FROM exam_sessions
-    WHERE mode = 'full_simulation' OR total_questions = 100
+    WHERE (mode = 'full_simulation' OR total_questions = 100)
+      AND (username = ? OR (username IS NULL AND ? = 'User 1'))
     ORDER BY created_at DESC LIMIT 1
-    ''')
+    ''', (user, user))
     latest_row = cursor.fetchone()
     latest_session = dict(latest_row) if latest_row else None
     
     # 4. Recent sessions
     cursor.execute('''
     SELECT * FROM exam_sessions
-    WHERE mode = 'full_simulation' OR total_questions = 100
+    WHERE (mode = 'full_simulation' OR total_questions = 100)
+      AND (username = ? OR (username IS NULL AND ? = 'User 1'))
     ORDER BY created_at DESC LIMIT 10
-    ''')
+    ''', (user, user))
     recent_rows = cursor.fetchall()
     recent_sessions = [dict(r) for r in recent_rows]
     
-    # 5. Mistakes and Practiced
+    # 5. Mistakes and Practiced for this user
     cursor.execute('''
     SELECT 
         COUNT(*) as practiced_count,
@@ -460,7 +534,8 @@ def get_full_simulation_stats():
         SUM(times_answered) as total_answers,
         SUM(times_correct) as total_correct
     FROM question_stats
-    ''')
+    WHERE (username = ? OR (username IS NULL AND ? = 'User 1'))
+    ''', (user, user))
     q_stat = cursor.fetchone()
     practiced_count = q_stat['practiced_count'] or 0
     mistake_count = q_stat['mistake_count'] or 0
@@ -487,7 +562,8 @@ def get_full_simulation_stats():
         'overall_accuracy': overall_accuracy
     }
 
-def get_dashboard_stats(subject=None):
+def get_dashboard_stats(subject=None, username='User 1'):
+    user = username or 'User 1'
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -498,20 +574,25 @@ def get_dashboard_stats(subject=None):
         cursor.execute('SELECT COUNT(*) as count FROM questions')
     total_bank_questions = cursor.fetchone()['count']
     
-    # 2. Total exams taken (strictly filtered by subject)
+    # 2. Total exams taken (strictly filtered by subject and user)
     if subject:
         cursor.execute('''
         SELECT COUNT(*) as count, AVG(percentage) as avg_score, MAX(score) as max_score 
         FROM exam_sessions 
         WHERE mode = "simulation" AND (subject = ? OR (subject IS NULL AND ? = "law"))
-        ''', (subject, subject))
+          AND (username = ? OR (username IS NULL AND ? = 'User 1'))
+        ''', (subject, subject, user, user))
     else:
-        cursor.execute('SELECT COUNT(*) as count, AVG(percentage) as avg_score, MAX(score) as max_score FROM exam_sessions WHERE mode = "simulation"')
+        cursor.execute('''
+        SELECT COUNT(*) as count, AVG(percentage) as avg_score, MAX(score) as max_score 
+        FROM exam_sessions 
+        WHERE mode = "simulation" AND (username = ? OR (username IS NULL AND ? = 'User 1'))
+        ''', (user, user))
     exam_stat = cursor.fetchone()
     total_exams = exam_stat['count'] or 0
     avg_score = round(exam_stat['avg_score'] or 0.0, 1)
     
-    # 3. Questions practiced & Mistakes
+    # 3. Questions practiced & Mistakes for this user
     if subject:
         cursor.execute('''
         SELECT 
@@ -522,8 +603,9 @@ def get_dashboard_stats(subject=None):
             SUM(s.times_correct) as total_correct
         FROM question_stats s
         JOIN questions q ON s.question_id = q.id
-        WHERE q.subject = ? OR (q.subject IS NULL AND ? = 'law')
-        ''', (subject, subject))
+        WHERE (q.subject = ? OR (q.subject IS NULL AND ? = 'law'))
+          AND (s.username = ? OR (s.username IS NULL AND ? = 'User 1'))
+        ''', (subject, subject, user, user))
     else:
         cursor.execute('''
         SELECT 
@@ -533,7 +615,8 @@ def get_dashboard_stats(subject=None):
             SUM(times_answered) as total_answers,
             SUM(times_correct) as total_correct
         FROM question_stats
-        ''')
+        WHERE (username = ? OR (username IS NULL AND ? = 'User 1'))
+        ''', (user, user))
     stat_row = cursor.fetchone()
     practiced_count = stat_row['practiced_count'] or 0
     mistake_count = stat_row['mistake_count'] or 0
@@ -542,7 +625,7 @@ def get_dashboard_stats(subject=None):
     total_correct = stat_row['total_correct'] or 0
     overall_accuracy = round((total_correct / total_answers * 100.0), 1) if total_answers > 0 else 0.0
     
-    # 4. Performance by category
+    # 4. Performance by category for this user
     if subject:
         cursor.execute('''
         SELECT 
@@ -553,11 +636,11 @@ def get_dashboard_stats(subject=None):
             COALESCE(SUM(s.times_correct), 0) as total_cor,
             COALESCE(SUM(s.times_wrong), 0) as total_wrg
         FROM questions q
-        LEFT JOIN question_stats s ON q.id = s.question_id
+        LEFT JOIN question_stats s ON q.id = s.question_id AND (s.username = ? OR (s.username IS NULL AND ? = 'User 1'))
         WHERE q.subject = ? OR (q.subject IS NULL AND ? = 'law')
         GROUP BY q.category
         ORDER BY total_in_cat DESC
-        ''', (subject, subject))
+        ''', (user, user, subject, subject))
     else:
         cursor.execute('''
         SELECT 
@@ -568,10 +651,10 @@ def get_dashboard_stats(subject=None):
             COALESCE(SUM(s.times_correct), 0) as total_cor,
             COALESCE(SUM(s.times_wrong), 0) as total_wrg
         FROM questions q
-        LEFT JOIN question_stats s ON q.id = s.question_id
+        LEFT JOIN question_stats s ON q.id = s.question_id AND (s.username = ? OR (s.username IS NULL AND ? = 'User 1'))
         GROUP BY q.category
         ORDER BY total_in_cat DESC
-        ''')
+        ''', (user, user))
     category_stats = []
     for r in cursor.fetchall():
         total_ans = r['total_ans']
@@ -585,25 +668,26 @@ def get_dashboard_stats(subject=None):
             'total_wrong': r['total_wrg']
         })
         
-    # 5. Top 10 most missed questions
+    # 5. Top 10 most missed questions for this user
     if subject:
         cursor.execute('''
         SELECT q.id, q.category, q.topic, q.question, q.law_ref, s.times_wrong, s.times_answered
         FROM questions q
         JOIN question_stats s ON q.id = s.question_id
         WHERE s.times_wrong > 0 AND (q.subject = ? OR (q.subject IS NULL AND ? = 'law'))
+          AND (s.username = ? OR (s.username IS NULL AND ? = 'User 1'))
         ORDER BY s.times_wrong DESC, s.times_answered DESC
         LIMIT 10
-        ''', (subject, subject))
+        ''', (subject, subject, user, user))
     else:
         cursor.execute('''
         SELECT q.id, q.category, q.topic, q.question, q.law_ref, s.times_wrong, s.times_answered
         FROM questions q
         JOIN question_stats s ON q.id = s.question_id
-        WHERE s.times_wrong > 0
+        WHERE s.times_wrong > 0 AND (s.username = ? OR (s.username IS NULL AND ? = 'User 1'))
         ORDER BY s.times_wrong DESC, s.times_answered DESC
         LIMIT 10
-        ''')
+        ''', (user, user))
     top_mistakes = [dict(r) for r in cursor.fetchall()]
     
     conn.close()
@@ -620,24 +704,35 @@ def get_dashboard_stats(subject=None):
         'top_mistakes': top_mistakes
     }
 
-def toggle_bookmark(question_id, note=''):
+def toggle_bookmark(question_id, note='', username='User 1'):
+    user = username or 'User 1'
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM user_bookmarks WHERE question_id = ?', (question_id,))
+    cursor.execute('''
+    SELECT * FROM user_bookmarks 
+    WHERE question_id = ? AND (username = ? OR (username IS NULL AND ? = 'User 1'))
+    ''', (question_id, user, user))
     if cursor.fetchone():
-        cursor.execute('DELETE FROM user_bookmarks WHERE question_id = ?', (question_id,))
+        cursor.execute('''
+        DELETE FROM user_bookmarks 
+        WHERE question_id = ? AND (username = ? OR (username IS NULL AND ? = 'User 1'))
+        ''', (question_id, user, user))
         is_bookmarked = False
     else:
-        cursor.execute('INSERT INTO user_bookmarks (question_id, note) VALUES (?, ?)', (question_id, note))
+        cursor.execute('INSERT INTO user_bookmarks (question_id, username, note) VALUES (?, ?, ?)', (question_id, user, note))
         is_bookmarked = True
     conn.commit()
     conn.close()
     return is_bookmarked
 
-def get_all_bookmarks():
+def get_all_bookmarks(username='User 1'):
+    user = username or 'User 1'
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT question_id FROM user_bookmarks')
+    cursor.execute('''
+    SELECT question_id FROM user_bookmarks 
+    WHERE (username = ? OR (username IS NULL AND ? = 'User 1'))
+    ''', (user, user))
     rows = cursor.fetchall()
     conn.close()
     return set([r['question_id'] for r in rows])
@@ -659,17 +754,18 @@ def add_custom_question(category, topic, question, options, answer_index, explan
     conn.commit()
     conn.close()
     return new_id
-    
-    conn.commit()
-    conn.close()
-    return new_id
 
-def reset_all_statistics():
+def reset_all_statistics(username=None):
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('DELETE FROM exam_sessions')
-    cursor.execute('DELETE FROM question_stats')
-    cursor.execute('DELETE FROM user_bookmarks')
+    if username and username != 'all':
+        cursor.execute('DELETE FROM exam_sessions WHERE username = ? OR (username IS NULL AND ? = "User 1")', (username, username))
+        cursor.execute('DELETE FROM question_stats WHERE username = ? OR (username IS NULL AND ? = "User 1")', (username, username))
+        cursor.execute('DELETE FROM user_bookmarks WHERE username = ? OR (username IS NULL AND ? = "User 1")', (username, username))
+    else:
+        cursor.execute('DELETE FROM exam_sessions')
+        cursor.execute('DELETE FROM question_stats')
+        cursor.execute('DELETE FROM user_bookmarks')
     conn.commit()
     conn.close()
 

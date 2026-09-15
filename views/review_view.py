@@ -18,6 +18,7 @@ def render_review_view():
     
     # Filter selection
     subject = st.session_state.get('selected_subject', 'law')
+    cur_user = st.session_state.get('current_user', 'User 1')
     session_mistakes = [q for q in st.session_state.get('mistakes', []) if q.get('subject', 'law') == subject or not q.get('subject')]
     
     filter_options = []
@@ -54,13 +55,13 @@ def render_review_view():
                 del st.session_state['review_loaded_qs']
             st.rerun()
         
-    # Reload & shuffle mistake questions if filter/subject changes
-    review_state_key = (filter_type, limit_count, subject)
+    # Reload & shuffle mistake questions if filter/subject/user changes
+    review_state_key = (filter_type, limit_count, subject, cur_user)
     if st.session_state.get('review_current_state') != review_state_key or 'review_loaded_qs' not in st.session_state:
         if filter_type == 'session_mistakes':
             raw_mistakes = list(session_mistakes)
         else:
-            raw_mistakes = db.get_mistake_questions(limit=limit_count, filter_type=filter_type, subject=subject)
+            raw_mistakes = db.get_mistake_questions(limit=limit_count, filter_type=filter_type, subject=subject, username=cur_user)
             
         if st.session_state.get('shuffle_options', True):
             st.session_state.review_loaded_qs = quiz_engine.shuffle_questions_list(raw_mistakes)
@@ -157,7 +158,8 @@ def render_interactive_review(questions):
                 c_letter = choice_letters[c_idx]
                 if st.button(f"**{c_letter}.**  {opt}", key=f"rev_btn_{q['id']}_{idx}_{c_idx}", use_container_width=True):
                     is_correct = (c_idx == correct_idx)
-                    db.record_answer(q['id'], c_idx, is_correct, clear_mistake_on_correct=True)
+                    cur_u = st.session_state.get('current_user', 'User 1')
+                    db.record_answer(q['id'], c_idx, is_correct, clear_mistake_on_correct=True, username=cur_u)
                     # Update in-memory question stats immediately so user sees live update!
                     if is_correct:
                         q['times_correct'] = q.get('times_correct', 0) + 1
@@ -182,7 +184,8 @@ def render_interactive_review(questions):
                     st.rerun()
             with c_btn3:
                 if st.button("🗑️ ปลดข้อนี้ออกจากคลังข้อผิด", key="rev_clear_unans", use_container_width=True, help="ลบข้อนี้ออกจากคลังข้อผิดทันที"):
-                    db.clear_question_mistake(q['id'])
+                    cur_u = st.session_state.get('current_user', 'User 1')
+                    db.clear_question_mistake(q['id'], username=cur_u)
                     q['times_wrong'] = 0
                     st.session_state.review_answers[idx] = {'selected': correct_idx, 'is_correct': True}
                     st.rerun()
@@ -241,7 +244,8 @@ def render_interactive_review(questions):
                     st.rerun()
             with c_btn4:
                 if st.button("🗑️ ปลดข้อผิด", key="rev_clear_ans", use_container_width=True, help="ลบข้อนี้ออกจากคลังข้อผิดอย่างถาวร"):
-                    db.clear_question_mistake(q['id'])
+                    cur_u = st.session_state.get('current_user', 'User 1')
+                    db.clear_question_mistake(q['id'], username=cur_u)
                     q['times_wrong'] = 0
                     st.toast("✅ ปลดข้อนี้ออกจากคลังข้อผิดเรียบร้อยแล้ว", icon="🗑️")
                     st.rerun()
@@ -345,7 +349,8 @@ def render_flashcards_view(questions):
             fc_col1, fc_col2 = st.columns([3, 1])
             with fc_col2:
                 if st.button("🗑️ ปลดออกจากคลังข้อผิด", key=f"fc_clear_{q['id']}_{i}", use_container_width=True, help="ลบข้อนี้ออกจากคลังข้อผิดทันที"):
-                    db.clear_question_mistake(q['id'])
+                    cur_u = st.session_state.get('current_user', 'User 1')
+                    db.clear_question_mistake(q['id'], username=cur_u)
                     q['times_wrong'] = 0
                     st.toast("✅ ปลดข้อนี้ออกจากคลังข้อผิดเรียบร้อยแล้ว", icon="🗑️")
                     st.rerun()

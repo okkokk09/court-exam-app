@@ -125,6 +125,34 @@ with st.sidebar:
 <p style="font-size: 0.82rem; color: #64748b; margin: 0;">ระบบจำลองสอบ & ทบทวนข้อผิดซ้ำ</p>
 </div>''', unsafe_allow_html=True)
     
+    # User Profile Switcher
+    st.markdown("**👤 โปรไฟล์ผู้ใช้งาน (User Profile):**")
+    user_options = ["User 1", "User 2"]
+    cur_user = st.session_state.get('current_user', 'User 1')
+    if cur_user not in user_options:
+        cur_user = 'User 1'
+        st.session_state.current_user = cur_user
+        
+    selected_user = st.selectbox(
+        "User Profile",
+        options=user_options,
+        index=user_options.index(cur_user),
+        key="sidebar_user_profile_select",
+        label_visibility="collapsed"
+    )
+    if selected_user != st.session_state.current_user:
+        st.session_state.current_user = selected_user
+        if not st.session_state.exam_active:
+            st.session_state.practice_q_idx = 0
+            st.session_state.review_q_idx = 0
+            st.session_state.practice_selected = None
+            st.session_state.practice_show_answer = False
+            st.session_state.review_selected = None
+            st.session_state.review_show_answer = False
+        st.rerun()
+        
+    st.write("---")
+    
     # Subject Switcher in Sidebar (Only shown when not on Full Exam Simulation)
     if not is_full_page:
         st.markdown("**📖 เลือกวิชาข้อสอบ (Subject):**")
@@ -228,11 +256,12 @@ with st.sidebar:
     st.write("---")
     
     # Sidebar Quick Stats Widget
+    active_user = st.session_state.get('current_user', 'User 1')
     if is_full_page:
         if not hasattr(db, 'get_full_simulation_stats'):
             importlib.reload(db)
         if hasattr(db, 'get_full_simulation_stats'):
-            f_stats = db.get_full_simulation_stats()
+            f_stats = db.get_full_simulation_stats(username=active_user)
         else:
             f_stats = {
                 'total_bank_questions': 0, 'total_exams': 0, 'avg_score': 0.0,
@@ -242,7 +271,7 @@ with st.sidebar:
             }
         st.markdown(f'''
         <div style="background: #f1f5f9; padding: 14px; border-radius: 12px; font-size: 0.85rem; border: 1px solid #e2e8f0;">
-            <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">📈 สรุปสอบจริงเต็มรูปแบบ (200 คะแนน)</div>
+            <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">📈 สรุปสอบจริง ({active_user})</div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                 <span style="color: #64748b;">สอบไปแล้ว:</span>
                 <b>{f_stats.get('total_exams', 0)} ครั้ง</b>
@@ -262,10 +291,10 @@ with st.sidebar:
         </div>
         ''', unsafe_allow_html=True)
     else:
-        db_stats = db.get_dashboard_stats(subject=cur_subject)
+        db_stats = db.get_dashboard_stats(subject=cur_subject, username=active_user)
         st.markdown(f'''
         <div style="background: #f1f5f9; padding: 14px; border-radius: 12px; font-size: 0.85rem; border: 1px solid #e2e8f0;">
-            <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">📈 สรุปภาพรวม ({ "คอมพิวเตอร์" if is_com_subj else "กฎหมายศาล" })</div>
+            <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">📈 สรุปภาพรวม ({active_user} - { "คอมพิวเตอร์" if is_com_subj else "กฎหมายศาล" })</div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                 <span style="color: #64748b;">คลังข้อสอบ:</span>
                 <b>{db_stats['total_bank_questions']} ข้อ</b>

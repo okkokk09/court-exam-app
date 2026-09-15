@@ -57,9 +57,10 @@ def render_stats_view():
             render_subject_dashboard('law', '⚖️ วิชากฎหมายศาลยุติธรรม', '#1e40af')
 
 def render_subject_dashboard(subj_key, subj_name, primary_color):
-    stats = db.get_dashboard_stats(subject=subj_key)
+    cur_user = st.session_state.get('current_user', 'User 1')
+    stats = db.get_dashboard_stats(subject=subj_key, username=cur_user)
     
-    st.markdown(f"<h4 style='color: {primary_color}; margin-top: 6px;'>📌 ข้อมูลสถิติเฉพาะ: {subj_name}</h4>", unsafe_allow_html=True)
+    st.markdown(f"<h4 style='color: {primary_color}; margin-top: 6px;'>📌 ข้อมูลสถิติเฉพาะ ({cur_user}): {subj_name}</h4>", unsafe_allow_html=True)
     
     # 4 Key Metrics Row
     m1, m2, m3, m4 = st.columns(4)
@@ -142,7 +143,7 @@ def render_subject_dashboard(subj_key, subj_name, primary_color):
     
     # Exam History
     st.subheader(f"📜 ประวัติการจำลองสอบย้อนหลัง ({subj_name})")
-    history = db.get_exam_history(limit=10, subject=subj_key)
+    history = db.get_exam_history(limit=10, subject=subj_key, username=cur_user)
     
     if not history:
         st.info("ยังไม่มีประวัติการจำลองสอบในวิชานี้")
@@ -168,11 +169,12 @@ def render_subject_dashboard(subj_key, subj_name, primary_color):
             ''', unsafe_allow_html=True)
 
 def render_full_exam_dashboard():
+    cur_user = st.session_state.get('current_user', 'User 1')
     if not hasattr(db, 'get_full_simulation_stats'):
         import importlib
         importlib.reload(db)
     if hasattr(db, 'get_full_simulation_stats'):
-        stats = db.get_full_simulation_stats()
+        stats = db.get_full_simulation_stats(username=cur_user)
     else:
         stats = {
             'total_bank_questions': 0, 'total_exams': 0, 'avg_score': 0.0,
@@ -181,7 +183,7 @@ def render_full_exam_dashboard():
             'mastered_count': 0, 'practiced_count': 0, 'overall_accuracy': 0.0
         }
     
-    st.markdown("<h4 style='color: #d97706; margin-top: 6px;'>🏆 สถิติผลการสอบจริงเต็มรูปแบบ (200 คะแนน 180 นาที)</h4>", unsafe_allow_html=True)
+    st.markdown(f"<h4 style='color: #d97706; margin-top: 6px;'>🏆 สถิติผลการสอบจริงเต็มรูปแบบ ({cur_user}) (200 คะแนน 180 นาที)</h4>", unsafe_allow_html=True)
     
     total_exams = stats.get('total_exams', 0)
     
@@ -268,10 +270,11 @@ def render_full_exam_dashboard():
     st.write("---")
 
 def render_comparison_dashboard():
-    law_stats = db.get_dashboard_stats(subject='law')
-    com_stats = db.get_dashboard_stats(subject='computer')
+    cur_user = st.session_state.get('current_user', 'User 1')
+    law_stats = db.get_dashboard_stats(subject='law', username=cur_user)
+    com_stats = db.get_dashboard_stats(subject='computer', username=cur_user)
     
-    st.markdown("<h4>⚖️ vs 💻 เปรียบเทียบสถิติระหว่าง 2 วิชา</h4>", unsafe_allow_html=True)
+    st.markdown(f"<h4>⚖️ vs 💻 เปรียบเทียบสถิติระหว่าง 2 วิชา ({cur_user})</h4>", unsafe_allow_html=True)
     
     c_law, c_com = st.columns(2)
     
@@ -327,8 +330,16 @@ def render_comparison_dashboard():
         
     st.write("---")
     with st.expander("⚙️ การจัดการข้อมูลสถิติ"):
-        st.warning("⚠️ การล้างสถิติจะลบประวัติการสอบและรายการข้อที่เคยตอบผิดทั้งหมด")
-        if st.button("🗑️ ล้างสถิติทั้งหมด (Reset Statistics)", type="secondary"):
-            db.reset_all_statistics()
-            st.success("ล้างสถิติเรียบร้อยแล้ว")
-            st.rerun()
+        cur_u = st.session_state.get('current_user', 'User 1')
+        st.warning(f"⚠️ การล้างสถิติจะลบประวัติการสอบ ข้อผิดใน Mistake Bank และบุ๊กมาร์กเฉพาะของโปรไฟล์ **{cur_u}**")
+        col_res1, col_res2 = st.columns(2)
+        with col_res1:
+            if st.button(f"🗑️ ล้างสถิติเฉพาะของ {cur_u}", type="secondary", use_container_width=True):
+                db.reset_all_statistics(username=cur_u)
+                st.success(f"ล้างสถิติของ {cur_u} เรียบร้อยแล้ว")
+                st.rerun()
+        with col_res2:
+            if st.button("🚨 ล้างสถิติทุกโปรไฟล์ (Reset All)", type="secondary", use_container_width=True):
+                db.reset_all_statistics()
+                st.success("ล้างสถิติทุกโปรไฟล์เรียบร้อยแล้ว")
+                st.rerun()

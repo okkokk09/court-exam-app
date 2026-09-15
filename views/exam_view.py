@@ -68,12 +68,13 @@ def render_full_exam_lobby():
             st.rerun()
 
     with col2:
-        st.markdown("**📊 สถิติการสอบจริงของคุณ (200 คะแนน):**")
+        cur_user = st.session_state.get('current_user', 'User 1')
+        st.markdown(f"**📊 สถิติการสอบจริงของคุณ ({cur_user}) (200 คะแนน):**")
         if not hasattr(db, 'get_full_simulation_stats'):
             import importlib
             importlib.reload(db)
         if hasattr(db, 'get_full_simulation_stats'):
-            full_stats = db.get_full_simulation_stats()
+            full_stats = db.get_full_simulation_stats(username=cur_user)
         else:
             full_stats = {
                 'total_bank_questions': 0, 'total_exams': 0, 'avg_score': 0.0,
@@ -202,9 +203,10 @@ QUICK SUBJECT EXAM
             st.rerun()
 
     with col2:
-        st.markdown(f"**📊 สถิติเฉพาะวิชาที่เลือก ({'คอมพิวเตอร์' if is_com else 'กฎหมายศาล'}):**")
+        cur_user = st.session_state.get('current_user', 'User 1')
+        st.markdown(f"**📊 สถิติเฉพาะวิชา ({cur_user} - {'คอมพิวเตอร์' if is_com else 'กฎหมายศาล'}):**")
         
-        current_stats = db.get_dashboard_stats(subject=subject)
+        current_stats = db.get_dashboard_stats(subject=subject, username=cur_user)
         active_color = '#0284c7' if is_com else '#1e40af'
         
         st.markdown(f'''<div style="background: #ffffff; border: 2px solid {active_color}; border-radius: 14px; padding: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">

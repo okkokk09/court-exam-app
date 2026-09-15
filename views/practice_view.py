@@ -71,7 +71,8 @@ def render_practice_view():
     q = questions[idx]
     
     # Header bar
-    bookmarks = db.get_all_bookmarks()
+    cur_user = st.session_state.get('current_user', 'User 1')
+    bookmarks = db.get_all_bookmarks(username=cur_user)
     is_bm = q['id'] in bookmarks
 
     if 'practice_answers' not in st.session_state:
@@ -89,7 +90,7 @@ def render_practice_view():
                 <span style="font-weight: 700; color: #047857;">ข้อที่ {idx + 1} จาก {total}</span>
             </div>
             <div>
-                <span style="font-size: 0.85rem; color: #64748b;">ID: {q['id']}</span>
+                <span style="font-size: 0.85rem; color: #64748b;">ID: {q['id']} ({cur_user})</span>
             </div>
         </div>
         ''', unsafe_allow_html=True)
@@ -119,7 +120,7 @@ def render_practice_view():
                 c_letter = choice_letters[c_idx]
                 if st.button(f"**{c_letter}.**  {opt}", key=f"prac_btn_{q['id']}_{idx}_{c_idx}", use_container_width=True):
                     is_correct = (c_idx == correct_idx)
-                    db.record_answer(q['id'], c_idx, is_correct)
+                    db.record_answer(q['id'], c_idx, is_correct, username=cur_user)
                     st.session_state.practice_answers[idx] = {'selected': c_idx, 'is_correct': is_correct}
                     st.rerun()
                     
@@ -136,7 +137,7 @@ def render_practice_view():
             with c3:
                 bm_label = "🚩 ปักหมุดแล้ว" if is_bm else "🏳️ ปักหมุด"
                 if st.button(bm_label, key="prac_bm_unans", use_container_width=True):
-                    db.toggle_bookmark(q['id'])
+                    db.toggle_bookmark(q['id'], username=cur_user)
                     st.rerun()
         else:
             user_choice = answered_info['selected']
@@ -186,7 +187,7 @@ def render_practice_view():
             with c4:
                 bm_label = "🚩 ปักหมุดแล้ว" if is_bm else "🏳️ ปักหมุด"
                 if st.button(bm_label, key="prac_bm_ans", use_container_width=True):
-                    db.toggle_bookmark(q['id'])
+                    db.toggle_bookmark(q['id'], username=cur_user)
                     st.rerun()
 
     # Sidebar / Right Navigator Palette

@@ -141,13 +141,14 @@ def render_add_tab():
                 st.rerun()
 
 def render_bookmarks_tab():
-    bookmarks = db.get_all_bookmarks()
+    cur_user = st.session_state.get('current_user', 'User 1')
+    bookmarks = db.get_all_bookmarks(username=cur_user)
     if not bookmarks:
-        st.info("ยังไม่มีข้อสอบที่ปักหมุดไว้ (คุณสามารถกดปุ่มปักหมุดในโหมดสอบหรือโหมดฝึกฝนได้)")
+        st.info(f"ยังไม่มีข้อสอบที่ปักหมุดไว้สำหรับ {cur_user} (คุณสามารถกดปุ่มปักหมุดในโหมดสอบหรือโหมดฝึกฝนได้)")
         return
         
     all_q = {q['id']: q for q in db.get_all_questions()}
-    st.write(f"รายการข้อสอบที่ปักหมุดไว้ **{len(bookmarks)}** ข้อ:")
+    st.write(f"รายการข้อสอบที่ปักหมุดไว้ ({cur_user}) **{len(bookmarks)}** ข้อ:")
     
     choice_letters = styles.get_choice_letters()
     for qid in bookmarks:
@@ -162,5 +163,5 @@ def render_bookmarks_tab():
                     else:
                         st.write(f"**{c_letter}.** {opt}")
                 if st.button(f"🗑️ ปลดปักหมุด {qid}", key=f"unbm_{qid}"):
-                    db.toggle_bookmark(qid)
+                    db.toggle_bookmark(qid, username=cur_user)
                     st.rerun()
