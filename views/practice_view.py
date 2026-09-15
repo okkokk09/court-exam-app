@@ -99,13 +99,19 @@ def render_practice_view():
         st.progress((idx + 1) / total, text=f"ความคืบหน้า {idx + 1}/{total} ข้อ")
         
         # Question Card
-        st.markdown(f'''
-        <div class="question-card" style="border-left: 5px solid #059669;">
-            <div class="q-text">
-                {q['question']}
+        with st.container(border=True):
+            st.markdown(f'''
+            <div class="question-header">
+                <div>
+                    <span class="q-number" style="background: #ecfdf5; color: #065f46;">ข้อที่ {idx + 1} / {total}</span>
+                </div>
+                <div style="font-size: 0.85rem; color: #94a3b8;">
+                    ID: {q['id']}
+                </div>
             </div>
-        </div>
-        ''', unsafe_allow_html=True)
+            ''', unsafe_allow_html=True)
+            st.markdown(q['question'], unsafe_allow_html=True)
+            st.write("")
         
         options = q['options']
         choice_letters = styles.get_choice_letters()

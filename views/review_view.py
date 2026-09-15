@@ -140,12 +140,19 @@ def render_interactive_review(questions):
         st.progress((idx + 1) / total, text=f"กำลังทำข้อที่ {idx + 1}/{total} (ตอบเสร็จแล้ว {ans_count}/{total} ข้อ)")
         
         # Question Card
-        st.markdown(
-            f'<div class="question-card" style="border-left: 5px solid #ef4444;">'
-            f'<div class="q-text" style="margin-bottom: 16px;">{q["question"]}</div>'
-            f'</div>',
-            unsafe_allow_html=True
-        )
+        with st.container(border=True):
+            st.markdown(f'''
+            <div class="question-header">
+                <div>
+                    <span class="q-number" style="background: #fee2e2; color: #991b1b;">ข้อที่ {idx + 1} / {total}</span>
+                </div>
+                <div style="font-size: 0.85rem; color: #94a3b8;">
+                    ID: {q['id']}
+                </div>
+            </div>
+            ''', unsafe_allow_html=True)
+            st.markdown(q['question'], unsafe_allow_html=True)
+            st.write("")
         
         options = q['options']
         choice_letters = styles.get_choice_letters()

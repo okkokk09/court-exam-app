@@ -306,10 +306,9 @@ def render_exam_in_progress():
     with col_main:
         is_bookmarked = current_idx in st.session_state.bookmarked_indices
         
-        # Question Card Header
-        bookmark_icon = "🚩" if is_bookmarked else "🏳️"
-        st.markdown(f'''
-        <div class="question-card">
+        # Question Card
+        with st.container(border=True):
+            st.markdown(f'''
             <div class="question-header">
                 <div>
                     <span class="q-number">ข้อที่ {current_idx + 1}</span>
@@ -318,11 +317,9 @@ def render_exam_in_progress():
                     ID: {q['id']}
                 </div>
             </div>
-            <div class="q-text">
-                {q['question']}
-            </div>
-        </div>
-        ''', unsafe_allow_html=True)
+            ''', unsafe_allow_html=True)
+            st.markdown(q['question'], unsafe_allow_html=True)
+            st.write("")
         
         # Choices Form
         options = q['options']

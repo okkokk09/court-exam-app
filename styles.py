@@ -230,10 +230,43 @@ def get_custom_css(theme_key='court_navy'):
     .question-card {{
         background: {t['card_bg']} !important;
         border-radius: 16px;
-        padding: 28px;
+        padding: 24px;
         box-shadow: {card_shadow};
         border: 1px solid {t['card_border']} !important;
         margin-bottom: 20px;
+    }}
+
+    /* Streamlit Bordered Container for Question Cards */
+    div[data-testid="stVerticalBlockBorderWrapper"] > div {{
+        background: {t['card_bg']} !important;
+        border-radius: 16px !important;
+        border-color: {t['card_border']} !important;
+        box-shadow: {card_shadow} !important;
+        padding: 20px 24px !important;
+    }}
+
+    div[data-testid="stVerticalBlockBorderWrapper"] p {{
+        font-size: 1.18rem !important;
+        font-weight: 600 !important;
+        color: {t['text_color']} !important;
+        line-height: 1.65 !important;
+    }}
+
+    div[data-testid="stVerticalBlockBorderWrapper"] pre,
+    .stMarkdown pre {{
+        background: #0f172a !important;
+        border-radius: 10px !important;
+        border: 1.5px solid #334155 !important;
+        padding: 14px 18px !important;
+        margin: 12px 0 !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }}
+    
+    div[data-testid="stVerticalBlockBorderWrapper"] code,
+    .stMarkdown code {{
+        font-family: 'Consolas', 'Fira Code', 'Courier New', monospace !important;
+        font-size: 1.05rem !important;
+        color: #38bdf8 !important;
     }}
 
     .question-header {{
