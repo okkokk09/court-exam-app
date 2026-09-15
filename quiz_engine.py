@@ -29,6 +29,8 @@ def init_session_state(st_session_state):
         'review_show_answer': False,
         'selected_theme': 'court_navy',
         'selected_subject': 'law', # 'law' or 'computer'
+        'exam_subject': 'law', # 'law' or 'computer' or 'combined'
+        'sidebar_subject_radio': 'law',
         'current_user': 'เฟิส', # 'เฟิส' or 'ก้อง' (multi-user profile isolation)
         'shuffle_options': True, # Shuffle choices to prevent position memorization
         'mistakes': [], # List of questions missed in the latest exam session (Mistake Bank)
@@ -87,6 +89,7 @@ def start_full_simulation_exam(st_session_state, duration_minutes=180):
     st_session_state.exam_active = True
     st_session_state.exam_submitted = False
     st_session_state.exam_mode = 'full_simulation'
+    st_session_state.exam_subject = 'combined'
     st_session_state.exam_questions = questions
     st_session_state.user_answers = {}
     st_session_state.bookmarked_indices = set()
@@ -101,6 +104,10 @@ def start_full_simulation_exam(st_session_state, duration_minutes=180):
 def start_simulation_exam(st_session_state, count=50, duration_minutes=60, category=None, subject=None):
     if not subject:
         subject = st_session_state.get('selected_subject', 'law')
+    st_session_state.selected_subject = subject
+    st_session_state.sidebar_subject_radio = subject
+    st_session_state.exam_subject = subject
+    
     questions = db.get_random_questions(count=count, category=category, subject=subject)
     if len(questions) < count:
         # If category has fewer, take all available
@@ -125,6 +132,10 @@ def start_simulation_exam(st_session_state, count=50, duration_minutes=60, categ
 def start_review_exam(st_session_state, limit=50, filter_type='frequent_mistakes', subject=None):
     if not subject:
         subject = st_session_state.get('selected_subject', 'law')
+    st_session_state.selected_subject = subject
+    st_session_state.sidebar_subject_radio = subject
+    st_session_state.exam_subject = subject
+    
     user = st_session_state.get('current_user', 'เฟิส')
     questions = db.get_mistake_questions(limit=limit, filter_type=filter_type, subject=subject, username=user)
     if not questions:
@@ -157,6 +168,8 @@ def start_mistakes_retest(st_session_state):
     if st_session_state.get('shuffle_options', True):
         questions = shuffle_questions_list(questions)
         
+    active_subj = st_session_state.get('exam_subject', st_session_state.get('selected_subject', 'law'))
+    st_session_state.exam_subject = active_subj
     st_session_state.exam_active = True
     st_session_state.exam_submitted = False
     st_session_state.exam_mode = 'mistakes_retest'
@@ -352,7 +365,10 @@ def calculate_and_save_exam_results(st_session_state):
     }
     
     # Save into SQLite database with subject
-    subj = 'combined' if is_full_sim else st_session_state.get('selected_subject', 'law')
+    subj = 'combined' if is_full_sim else st_session_state.get('exam_subject', st_session_state.get('selected_subject', 'law'))
+    if subj != 'combined':
+        st_session_state.selected_subject = subj
+        st_session_state.sidebar_subject_radio = subj
     mode_label = 'สอบจริงเต็มรูปแบบ 200 คะแนน' if is_full_sim else ('รวมข้อสอบ' if exam_mode == 'simulation' else ('วนทำซ้ำข้อผิด' if exam_mode == 'mistakes_retest' else 'ทบทวนข้อผิด'))
     
     session_id = db.save_exam_session(

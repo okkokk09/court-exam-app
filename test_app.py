@@ -314,6 +314,51 @@ class TestQuizApp(unittest.TestCase):
         self.assertEqual(quiz_engine.format_time_hhmmss(125), "02:05")
         self.assertEqual(quiz_engine.format_time_hhmmss(0), "00:00")
 
+    def test_computer_exam_state_preservation(self):
+        class DummySessionState(dict):
+            __getattr__ = dict.get
+            __setattr__ = dict.__setitem__
+
+        dummy_state = DummySessionState()
+        quiz_engine.init_session_state(dummy_state)
+        self.assertEqual(dummy_state.selected_subject, 'law')
+        self.assertEqual(dummy_state.exam_subject, 'law')
+
+        # 1. Switch to Computer and start computer exam
+        dummy_state.selected_subject = 'computer'
+        quiz_engine.start_simulation_exam(dummy_state, count=20, duration_minutes=30, subject='computer')
+
+        self.assertTrue(dummy_state.exam_active)
+        self.assertEqual(dummy_state.selected_subject, 'computer')
+        self.assertEqual(dummy_state.exam_subject, 'computer')
+        self.assertEqual(dummy_state.sidebar_subject_radio, 'computer')
+        self.assertEqual(len(dummy_state.exam_questions), 20)
+
+        for q in dummy_state.exam_questions:
+            self.assertEqual(q['subject'], 'computer')
+
+        # 2. Answer questions and calculate results
+        for i in range(15):
+            dummy_state.user_answers[i] = dummy_state.exam_questions[i]['answer_index']
+        for i in range(15, 20):
+            dummy_state.user_answers[i] = (dummy_state.exam_questions[i]['answer_index'] + 1) % 4
+
+        res = quiz_engine.calculate_and_save_exam_results(dummy_state)
+
+        # Subject must remain computer after exam submission
+        self.assertEqual(dummy_state.selected_subject, 'computer')
+        self.assertEqual(dummy_state.sidebar_subject_radio, 'computer')
+        self.assertEqual(dummy_state.exam_subject, 'computer')
+        self.assertEqual(len(dummy_state.mistakes), 5)
+
+        # 3. Retest mistakes from computer exam
+        retest_ok = quiz_engine.start_mistakes_retest(dummy_state)
+        self.assertTrue(retest_ok)
+        self.assertTrue(dummy_state.exam_active)
+        self.assertEqual(dummy_state.exam_subject, 'computer')
+        for q in dummy_state.exam_questions:
+            self.assertEqual(q['subject'], 'computer')
+
 if __name__ == '__main__':
     unittest.main()
 

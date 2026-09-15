@@ -261,15 +261,17 @@ def render_exam_in_progress():
     # Top Header & Timer Row
     col_t1, col_t2, col_t3 = st.columns([2.2, 1.3, 1.0])
     with col_t1:
+        active_subj = st.session_state.get('exam_subject', st.session_state.get('selected_subject', 'law'))
+        is_com = (active_subj == 'computer')
         if is_full_sim:
             curr_subj = "⚖️ หมวดกฎหมาย (ข้อ 1-30)" if current_idx < 30 else "💻 หมวดคอมพิวเตอร์ (ข้อ 31-100)"
             mode_name = f"🏆 สอบจริงเต็มรูปแบบ | {curr_subj}"
         elif st.session_state.get('exam_mode') == 'mistakes_retest':
-            mode_name = "🎯 วนทำซ้ำเฉพาะข้อที่ผิด (Mistake Bank)"
+            mode_name = f"🎯 วนทำซ้ำเฉพาะข้อที่ผิด ({'💻 วิชาคอมพิวเตอร์' if is_com else '⚖️ วิชากฎหมาย'})"
         elif st.session_state.get('exam_mode') == 'review_test':
-            mode_name = "🔄 โหมดทบทวนข้อผิด"
+            mode_name = f"🔄 โหมดทบทวนข้อผิด ({'💻 วิชาคอมพิวเตอร์' if is_com else '⚖️ วิชากฎหมาย'})"
         else:
-            mode_name = "⚖️ โหมดจำลองสอบรายวิชา"
+            mode_name = "💻 จำลองสอบวิชาคอมพิวเตอร์และสารสนเทศ" if is_com else "⚖️ จำลองสอบวิชากฎหมายระเบียบบริหารศาลฯ"
             
         st.markdown(f'''
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
@@ -641,6 +643,10 @@ def render_exam_results():
                 st.session_state.exam_active = False
                 if is_full_sim:
                     quiz_engine.start_full_simulation_exam(st.session_state, duration_minutes=180)
+                else:
+                    active_subj = st.session_state.get('exam_subject', st.session_state.get('selected_subject', 'law'))
+                    st.session_state.selected_subject = active_subj
+                    st.session_state.sidebar_subject_radio = active_subj
                 st.rerun()
         with act_c3:
             if st.button("📚 คลังข้อผิดทั้งหมด (Mistake Bank)", use_container_width=True, help="ไปที่โหมดทบทวนข้อผิดสะสมทั้งหมดจากฐานข้อมูล SQLite"):
@@ -664,6 +670,10 @@ def render_exam_results():
                 st.session_state.exam_active = False
                 if is_full_sim:
                     quiz_engine.start_full_simulation_exam(st.session_state, duration_minutes=180)
+                else:
+                    active_subj = st.session_state.get('exam_subject', st.session_state.get('selected_subject', 'law'))
+                    st.session_state.selected_subject = active_subj
+                    st.session_state.sidebar_subject_radio = active_subj
                 st.rerun()
         with act_c2:
             if st.button("📚 ไปฝึกทำแยกหมวดหมู่", use_container_width=True):

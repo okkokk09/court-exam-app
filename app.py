@@ -88,29 +88,34 @@ else:
 </div>'''
 st.markdown(header_html, unsafe_allow_html=True)
 
+def switch_subject(new_subj):
+    st.session_state.selected_subject = new_subj
+    st.session_state.sidebar_subject_radio = new_subj
+    st.session_state.exam_subject = new_subj
+    st.session_state.exam_active = False
+    st.session_state.exam_submitted = False
+    st.session_state.practice_q_idx = 0
+    st.session_state.review_q_idx = 0
+    st.session_state.practice_selected = None
+    st.session_state.practice_show_answer = False
+    st.session_state.review_selected = None
+    st.session_state.review_show_answer = False
+
 # 5. Quick Subject Switcher Buttons (Top Toolbar - Only shown for single-subject pages)
 if not is_full_page:
     col_btn1, col_btn2, col_blank = st.columns([1.3, 1.3, 2.4])
     with col_btn1:
         law_type = "primary" if not is_com_subj else "secondary"
-        if st.button("⚖️ วิชากฎหมายศาลยุติธรรม", type=law_type, use_container_width=True):
+        if st.button("⚖️ วิชากฎหมายศาลยุติธรรม", type=law_type, use_container_width=True, disabled=st.session_state.get('exam_active', False)):
             if st.session_state.selected_subject != 'law':
-                st.session_state.selected_subject = 'law'
-                st.session_state.exam_active = False
-                st.session_state.exam_submitted = False
-                st.session_state.practice_q_idx = 0
-                st.session_state.review_q_idx = 0
+                switch_subject('law')
                 st.rerun()
 
     with col_btn2:
         com_type = "primary" if is_com_subj else "secondary"
-        if st.button("💻 วิชาคอมพิวเตอร์และสารสนเทศ", type=com_type, use_container_width=True):
+        if st.button("💻 วิชาคอมพิวเตอร์และสารสนเทศ", type=com_type, use_container_width=True, disabled=st.session_state.get('exam_active', False)):
             if st.session_state.selected_subject != 'computer':
-                st.session_state.selected_subject = 'computer'
-                st.session_state.exam_active = False
-                st.session_state.exam_submitted = False
-                st.session_state.practice_q_idx = 0
-                st.session_state.review_q_idx = 0
+                switch_subject('computer')
                 st.rerun()
 
     st.write("")
@@ -133,6 +138,9 @@ with st.sidebar:
         cur_user = 'เฟิส'
         st.session_state.current_user = cur_user
         
+    if st.session_state.get('sidebar_user_profile_select') != cur_user:
+        st.session_state.sidebar_user_profile_select = cur_user
+
     selected_user = st.selectbox(
         "User Profile",
         options=user_options,
@@ -153,13 +161,31 @@ with st.sidebar:
         
     st.write("---")
     
-    # Subject Switcher in Sidebar (Only shown when not on Full Exam Simulation)
-    if not is_full_page:
+    # Subject Switcher in Sidebar
+    if is_full_page:
+        st.markdown('''<div style="background: rgba(212, 175, 55, 0.12); border: 1.5px solid #d4af37; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; text-align: center;">
+<div style="font-weight: 700; color: #d97706; font-size: 0.88rem;">🏆 รวม 2 หมวดวิชา (100 ข้อ)</div>
+<div style="font-size: 0.78rem; color: #64748b; margin-top: 3px;">ข้อ 1-30: กฎหมาย (60 คะแนน)<br>ข้อ 31-100: คอมพิวเตอร์ (140 คะแนน)</div>
+</div>''', unsafe_allow_html=True)
+    elif st.session_state.get('exam_active', False) and not st.session_state.get('exam_submitted', False):
+        active_subj = st.session_state.get('exam_subject', cur_subject)
+        is_active_com = (active_subj == 'computer')
+        badge_color = '#0284c7' if is_active_com else '#1e40af'
+        badge_bg = '#e0f2fe' if is_active_com else '#eff6ff'
+        badge_title = '💻 กำลังสอบ: วิชาคอมพิวเตอร์และสารสนเทศ' if is_active_com else '⚖️ กำลังสอบ: วิชากฎหมายศาลยุติธรรม'
+        st.markdown(f'''<div style="background: {badge_bg}; border: 1.5px solid {badge_color}; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; text-align: center;">
+<div style="font-weight: 700; color: {badge_color}; font-size: 0.88rem;">{badge_title}</div>
+<div style="font-size: 0.78rem; color: #64748b; margin-top: 3px;">ข้อสอบกำลังดำเนินอยู่</div>
+</div>''', unsafe_allow_html=True)
+    else:
         st.markdown("**📖 เลือกวิชาข้อสอบ (Subject):**")
         subject_options = {
             'law': '⚖️ กฎหมายศาลยุติธรรม (พ.ร.บ. 2543)',
             'computer': '💻 คอมพิวเตอร์ & สารสนเทศ'
         }
+        if st.session_state.get('sidebar_subject_radio') != cur_subject:
+            st.session_state.sidebar_subject_radio = cur_subject
+
         chosen_subj = st.radio(
             "Subject Selection",
             options=list(subject_options.keys()),
@@ -169,17 +195,8 @@ with st.sidebar:
             label_visibility="collapsed"
         )
         if chosen_subj != st.session_state.selected_subject:
-            st.session_state.selected_subject = chosen_subj
-            st.session_state.exam_active = False
-            st.session_state.exam_submitted = False
-            st.session_state.practice_q_idx = 0
-            st.session_state.review_q_idx = 0
+            switch_subject(chosen_subj)
             st.rerun()
-    else:
-        st.markdown('''<div style="background: rgba(212, 175, 55, 0.12); border: 1.5px solid #d4af37; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; text-align: center;">
-<div style="font-weight: 700; color: #d97706; font-size: 0.88rem;">🏆 รวม 2 หมวดวิชา (100 ข้อ)</div>
-<div style="font-size: 0.78rem; color: #64748b; margin-top: 3px;">ข้อ 1-30: กฎหมาย (60 คะแนน)<br>ข้อ 31-100: คอมพิวเตอร์ (140 คะแนน)</div>
-</div>''', unsafe_allow_html=True)
         
     st.write("---")
     st.markdown("**📌 เลือกโหมดการทำงาน:**")
