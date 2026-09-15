@@ -25,14 +25,12 @@ def render_stats_view():
         law_type = "primary" if not is_com and view_mode == 'subject' else "secondary"
         if st.button("⚖️ สถิติวิชากฎหมาย", type=law_type, use_container_width=True, key="stats_btn_law"):
             st.session_state.selected_subject = 'law'
-            st.session_state.sidebar_subject_radio = 'law'
             st.session_state.stats_view_mode = 'subject'
             st.rerun()
     with c2:
         com_type = "primary" if is_com and view_mode == 'subject' else "secondary"
         if st.button("💻 สถิติวิชาคอมฯ", type=com_type, use_container_width=True, key="stats_btn_com"):
             st.session_state.selected_subject = 'computer'
-            st.session_state.sidebar_subject_radio = 'computer'
             st.session_state.stats_view_mode = 'subject'
             st.rerun()
     with c3:

@@ -331,7 +331,6 @@ class TestQuizApp(unittest.TestCase):
         self.assertTrue(dummy_state.exam_active)
         self.assertEqual(dummy_state.selected_subject, 'computer')
         self.assertEqual(dummy_state.exam_subject, 'computer')
-        self.assertEqual(dummy_state.sidebar_subject_radio, 'computer')
         self.assertEqual(len(dummy_state.exam_questions), 20)
 
         for q in dummy_state.exam_questions:
@@ -347,7 +346,6 @@ class TestQuizApp(unittest.TestCase):
 
         # Subject must remain computer after exam submission
         self.assertEqual(dummy_state.selected_subject, 'computer')
-        self.assertEqual(dummy_state.sidebar_subject_radio, 'computer')
         self.assertEqual(dummy_state.exam_subject, 'computer')
         self.assertEqual(len(dummy_state.mistakes), 5)
 

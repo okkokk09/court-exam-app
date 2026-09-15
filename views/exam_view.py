@@ -646,7 +646,6 @@ def render_exam_results():
                 else:
                     active_subj = st.session_state.get('exam_subject', st.session_state.get('selected_subject', 'law'))
                     st.session_state.selected_subject = active_subj
-                    st.session_state.sidebar_subject_radio = active_subj
                 st.rerun()
         with act_c3:
             if st.button("📚 คลังข้อผิดทั้งหมด (Mistake Bank)", use_container_width=True, help="ไปที่โหมดทบทวนข้อผิดสะสมทั้งหมดจากฐานข้อมูล SQLite"):
@@ -673,7 +672,6 @@ def render_exam_results():
                 else:
                     active_subj = st.session_state.get('exam_subject', st.session_state.get('selected_subject', 'law'))
                     st.session_state.selected_subject = active_subj
-                    st.session_state.sidebar_subject_radio = active_subj
                 st.rerun()
         with act_c2:
             if st.button("📚 ไปฝึกทำแยกหมวดหมู่", use_container_width=True):

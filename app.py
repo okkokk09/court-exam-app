@@ -90,7 +90,6 @@ st.markdown(header_html, unsafe_allow_html=True)
 
 def switch_subject(new_subj):
     st.session_state.selected_subject = new_subj
-    st.session_state.sidebar_subject_radio = new_subj
     st.session_state.exam_subject = new_subj
     st.session_state.exam_active = False
     st.session_state.exam_submitted = False
@@ -137,15 +136,11 @@ with st.sidebar:
     if cur_user not in user_options:
         cur_user = 'เฟิส'
         st.session_state.current_user = cur_user
-        
-    if st.session_state.get('sidebar_user_profile_select') != cur_user:
-        st.session_state.sidebar_user_profile_select = cur_user
 
     selected_user = st.selectbox(
         "User Profile",
         options=user_options,
         index=user_options.index(cur_user),
-        key="sidebar_user_profile_select",
         label_visibility="collapsed"
     )
     if selected_user != st.session_state.current_user:
@@ -183,15 +178,11 @@ with st.sidebar:
             'law': '⚖️ กฎหมายศาลยุติธรรม (พ.ร.บ. 2543)',
             'computer': '💻 คอมพิวเตอร์ & สารสนเทศ'
         }
-        if st.session_state.get('sidebar_subject_radio') != cur_subject:
-            st.session_state.sidebar_subject_radio = cur_subject
-
         chosen_subj = st.radio(
             "Subject Selection",
             options=list(subject_options.keys()),
             format_func=lambda x: subject_options[x],
             index=list(subject_options.keys()).index(cur_subject) if cur_subject in subject_options else 0,
-            key="sidebar_subject_radio",
             label_visibility="collapsed"
         )
         if chosen_subj != st.session_state.selected_subject:
