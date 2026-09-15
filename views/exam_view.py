@@ -725,9 +725,13 @@ def render_exam_results():
                 else:
                     st.write(f"{prefix} {opt}")
                     
+            subj = d.get('subject', 'computer' if str(d.get('id', '')).startswith('COM') or str(qid).startswith('COM') else 'law')
+            ref_label = "📖 หมวดหมู่วิชา" if subj == 'computer' else "📖 อ้างอิง"
+            ref_val = (d.get('topic') or d.get('category', 'ทั่วไป')) if subj == 'computer' else d.get('law_ref', 'พ.ร.บ.ระเบียบบริหารราชการศาลยุติธรรม')
+            
             st.markdown(f'''
             <div class="{box_style}">
-                <span class="law-ref-pill">📖 อ้างอิง: {d.get('law_ref', 'พ.ร.บ.ระเบียบบริหารราชการศาลยุติธรรม')}</span><br>
+                <span class="law-ref-pill">{ref_label}: {ref_val}</span><br>
                 <b>คำอธิบายเฉลย:</b> {d.get('explanation', 'ไม่มีคำอธิบายเพิ่มเติม')}
             </div>
             ''', unsafe_allow_html=True)

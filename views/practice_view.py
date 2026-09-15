@@ -166,9 +166,13 @@ def render_practice_view():
                     ''', unsafe_allow_html=True)
                     
             # Explanation Box
+            subj = q.get('subject', 'computer' if str(q.get('id', '')).startswith('COM') else 'law')
+            ref_label = "📖 หมวดหมู่วิชา" if subj == 'computer' else "📖 อ้างอิง"
+            ref_val = (q.get('topic') or q.get('category', 'ทั่วไป')) if subj == 'computer' else q.get('law_ref', 'พ.ร.บ.ระเบียบบริหารราชการศาลยุติธรรม')
+            
             st.markdown(f'''
             <div class="{'explanation-box' if is_correct else 'explanation-wrong-box'}">
-                <span class="law-ref-pill">📖 อ้างอิง: {q.get('law_ref', 'พ.ร.บ.ระเบียบบริหารราชการศาลยุติธรรม')}</span><br>
+                <span class="law-ref-pill">{ref_label}: {ref_val}</span><br>
                 <b>เหตุผลและคำอธิบาย:</b> {q.get('explanation', '')}
             </div>
             ''', unsafe_allow_html=True)

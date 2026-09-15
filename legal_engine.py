@@ -305,14 +305,17 @@ def get_legal_reference_data(question_obj):
     if not question_obj:
         return None
         
+    subject = question_obj.get('subject', '')
+    qid = str(question_obj.get('id', ''))
     law_ref = str(question_obj.get('law_ref', '')).strip()
     topic = str(question_obj.get('topic', '')).strip()
     explanation = str(question_obj.get('explanation', '')).strip()
     question_text = str(question_obj.get('question', '')).strip()
     category = str(question_obj.get('category', '')).strip()
     
+    is_computer = (subject == 'computer' or qid.startswith('COM'))
+    
     # 1. Check for specific Section Number if question relates to พ.ร.บ. บริหารราชการศาล
-    # Parse section number from law_ref, explanation, or topic
     sec_match = re.search(r'มาตรา\s*(?:ที่\s*)?(\d+)', f"{law_ref} {explanation} {topic}")
     if sec_match:
         sec_num = int(sec_match.group(1))
@@ -336,7 +339,11 @@ def get_legal_reference_data(question_obj):
     if best_match:
         return best_match
         
-    # 3. Dynamic automated generation
+    # If this is a general computer question without specific IT law match, DO NOT show legal expander
+    if is_computer:
+        return None
+        
+    # 3. Dynamic automated generation (Only for Law questions)
     title = law_ref if law_ref and law_ref not in ['-', 'พ.ร.บ.'] else f'ข้อกำหนดและหลักการ: {category}'
     
     elements = []
