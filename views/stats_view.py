@@ -57,7 +57,7 @@ def render_stats_view():
             render_subject_dashboard('law', '⚖️ วิชากฎหมายศาลยุติธรรม', '#1e40af')
 
 def render_subject_dashboard(subj_key, subj_name, primary_color):
-    cur_user = st.session_state.get('current_user', 'User 1')
+    cur_user = st.session_state.get('current_user', 'เฟิส')
     stats = db.get_dashboard_stats(subject=subj_key, username=cur_user)
     
     st.markdown(f"<h4 style='color: {primary_color}; margin-top: 6px;'>📌 ข้อมูลสถิติเฉพาะ ({cur_user}): {subj_name}</h4>", unsafe_allow_html=True)
@@ -169,7 +169,7 @@ def render_subject_dashboard(subj_key, subj_name, primary_color):
             ''', unsafe_allow_html=True)
 
 def render_full_exam_dashboard():
-    cur_user = st.session_state.get('current_user', 'User 1')
+    cur_user = st.session_state.get('current_user', 'เฟิส')
     if not hasattr(db, 'get_full_simulation_stats'):
         import importlib
         importlib.reload(db)
@@ -270,7 +270,7 @@ def render_full_exam_dashboard():
     st.write("---")
 
 def render_comparison_dashboard():
-    cur_user = st.session_state.get('current_user', 'User 1')
+    cur_user = st.session_state.get('current_user', 'เฟิส')
     law_stats = db.get_dashboard_stats(subject='law', username=cur_user)
     com_stats = db.get_dashboard_stats(subject='computer', username=cur_user)
     
@@ -330,7 +330,7 @@ def render_comparison_dashboard():
         
     st.write("---")
     with st.expander("⚙️ การจัดการข้อมูลสถิติ"):
-        cur_u = st.session_state.get('current_user', 'User 1')
+        cur_u = st.session_state.get('current_user', 'เฟิส')
         st.warning(f"⚠️ การล้างสถิติจะลบประวัติการสอบ ข้อผิดใน Mistake Bank และบุ๊กมาร์กเฉพาะของโปรไฟล์ **{cur_u}**")
         col_res1, col_res2 = st.columns(2)
         with col_res1:

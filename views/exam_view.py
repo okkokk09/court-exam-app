@@ -68,7 +68,7 @@ def render_full_exam_lobby():
             st.rerun()
 
     with col2:
-        cur_user = st.session_state.get('current_user', 'User 1')
+        cur_user = st.session_state.get('current_user', 'เฟิส')
         st.markdown(f"**📊 สถิติการสอบจริงของคุณ ({cur_user}) (200 คะแนน):**")
         if not hasattr(db, 'get_full_simulation_stats'):
             import importlib
@@ -203,7 +203,7 @@ QUICK SUBJECT EXAM
             st.rerun()
 
     with col2:
-        cur_user = st.session_state.get('current_user', 'User 1')
+        cur_user = st.session_state.get('current_user', 'เฟิส')
         st.markdown(f"**📊 สถิติเฉพาะวิชา ({cur_user} - {'คอมพิวเตอร์' if is_com else 'กฎหมายศาล'}):**")
         
         current_stats = db.get_dashboard_stats(subject=subject, username=cur_user)

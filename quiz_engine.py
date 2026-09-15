@@ -29,7 +29,7 @@ def init_session_state(st_session_state):
         'review_show_answer': False,
         'selected_theme': 'court_navy',
         'selected_subject': 'law', # 'law' or 'computer'
-        'current_user': 'User 1', # 'User 1' or 'User 2' (multi-user profile isolation)
+        'current_user': 'เฟิส', # 'เฟิส' or 'ก้อง' (multi-user profile isolation)
         'shuffle_options': True, # Shuffle choices to prevent position memorization
         'mistakes': [], # List of questions missed in the latest exam session (Mistake Bank)
     }
@@ -125,7 +125,7 @@ def start_simulation_exam(st_session_state, count=50, duration_minutes=60, categ
 def start_review_exam(st_session_state, limit=50, filter_type='frequent_mistakes', subject=None):
     if not subject:
         subject = st_session_state.get('selected_subject', 'law')
-    user = st_session_state.get('current_user', 'User 1')
+    user = st_session_state.get('current_user', 'เฟิส')
     questions = db.get_mistake_questions(limit=limit, filter_type=filter_type, subject=subject, username=user)
     if not questions:
         return False
@@ -243,7 +243,7 @@ def calculate_and_save_exam_results(st_session_state):
         
         is_correct = (user_ans == correct_ans) if user_ans is not None else False
         
-        current_user = st_session_state.get('current_user', 'User 1')
+        current_user = st_session_state.get('current_user', 'เฟิส')
         
         # Record into SQLite question_stats
         db.record_answer(qid, user_ans, is_correct, username=current_user)

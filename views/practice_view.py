@@ -71,7 +71,7 @@ def render_practice_view():
     q = questions[idx]
     
     # Header bar
-    cur_user = st.session_state.get('current_user', 'User 1')
+    cur_user = st.session_state.get('current_user', 'เฟิส')
     bookmarks = db.get_all_bookmarks(username=cur_user)
     is_bm = q['id'] in bookmarks
 

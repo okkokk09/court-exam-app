@@ -141,7 +141,7 @@ def render_add_tab():
                 st.rerun()
 
 def render_bookmarks_tab():
-    cur_user = st.session_state.get('current_user', 'User 1')
+    cur_user = st.session_state.get('current_user', 'เฟิส')
     bookmarks = db.get_all_bookmarks(username=cur_user)
     if not bookmarks:
         st.info(f"ยังไม่มีข้อสอบที่ปักหมุดไว้สำหรับ {cur_user} (คุณสามารถกดปุ่มปักหมุดในโหมดสอบหรือโหมดฝึกฝนได้)")

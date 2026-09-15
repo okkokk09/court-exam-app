@@ -127,10 +127,10 @@ with st.sidebar:
     
     # User Profile Switcher
     st.markdown("**👤 โปรไฟล์ผู้ใช้งาน (User Profile):**")
-    user_options = ["User 1", "User 2"]
-    cur_user = st.session_state.get('current_user', 'User 1')
+    user_options = ["เฟิส", "ก้อง"]
+    cur_user = st.session_state.get('current_user', 'เฟิส')
     if cur_user not in user_options:
-        cur_user = 'User 1'
+        cur_user = 'เฟิส'
         st.session_state.current_user = cur_user
         
     selected_user = st.selectbox(
@@ -256,7 +256,7 @@ with st.sidebar:
     st.write("---")
     
     # Sidebar Quick Stats Widget
-    active_user = st.session_state.get('current_user', 'User 1')
+    active_user = st.session_state.get('current_user', 'เฟิส')
     if is_full_page:
         if not hasattr(db, 'get_full_simulation_stats'):
             importlib.reload(db)

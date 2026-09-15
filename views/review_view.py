@@ -18,7 +18,7 @@ def render_review_view():
     
     # Filter selection
     subject = st.session_state.get('selected_subject', 'law')
-    cur_user = st.session_state.get('current_user', 'User 1')
+    cur_user = st.session_state.get('current_user', 'เฟิส')
     session_mistakes = [q for q in st.session_state.get('mistakes', []) if q.get('subject', 'law') == subject or not q.get('subject')]
     
     filter_options = []
@@ -158,7 +158,7 @@ def render_interactive_review(questions):
                 c_letter = choice_letters[c_idx]
                 if st.button(f"**{c_letter}.**  {opt}", key=f"rev_btn_{q['id']}_{idx}_{c_idx}", use_container_width=True):
                     is_correct = (c_idx == correct_idx)
-                    cur_u = st.session_state.get('current_user', 'User 1')
+                    cur_u = st.session_state.get('current_user', 'เฟิส')
                     db.record_answer(q['id'], c_idx, is_correct, clear_mistake_on_correct=True, username=cur_u)
                     # Update in-memory question stats immediately so user sees live update!
                     if is_correct:
@@ -184,7 +184,7 @@ def render_interactive_review(questions):
                     st.rerun()
             with c_btn3:
                 if st.button("🗑️ ปลดข้อนี้ออกจากคลังข้อผิด", key="rev_clear_unans", use_container_width=True, help="ลบข้อนี้ออกจากคลังข้อผิดทันที"):
-                    cur_u = st.session_state.get('current_user', 'User 1')
+                    cur_u = st.session_state.get('current_user', 'เฟิส')
                     db.clear_question_mistake(q['id'], username=cur_u)
                     q['times_wrong'] = 0
                     st.session_state.review_answers[idx] = {'selected': correct_idx, 'is_correct': True}
@@ -244,7 +244,7 @@ def render_interactive_review(questions):
                     st.rerun()
             with c_btn4:
                 if st.button("🗑️ ปลดข้อผิด", key="rev_clear_ans", use_container_width=True, help="ลบข้อนี้ออกจากคลังข้อผิดอย่างถาวร"):
-                    cur_u = st.session_state.get('current_user', 'User 1')
+                    cur_u = st.session_state.get('current_user', 'เฟิส')
                     db.clear_question_mistake(q['id'], username=cur_u)
                     q['times_wrong'] = 0
                     st.toast("✅ ปลดข้อนี้ออกจากคลังข้อผิดเรียบร้อยแล้ว", icon="🗑️")
@@ -283,8 +283,8 @@ def render_interactive_review(questions):
                 st.session_state.review_q_idx = i
                 st.rerun()
                 
-        st.write("---")
-        
+            st.write("---")
+            
         # Stats summary in right column
         ans_count = len(review_answers)
         correct_count = sum(1 for a in review_answers.values() if a['is_correct'])
@@ -349,7 +349,7 @@ def render_flashcards_view(questions):
             fc_col1, fc_col2 = st.columns([3, 1])
             with fc_col2:
                 if st.button("🗑️ ปลดออกจากคลังข้อผิด", key=f"fc_clear_{q['id']}_{i}", use_container_width=True, help="ลบข้อนี้ออกจากคลังข้อผิดทันที"):
-                    cur_u = st.session_state.get('current_user', 'User 1')
+                    cur_u = st.session_state.get('current_user', 'เฟิส')
                     db.clear_question_mistake(q['id'], username=cur_u)
                     q['times_wrong'] = 0
                     st.toast("✅ ปลดข้อนี้ออกจากคลังข้อผิดเรียบร้อยแล้ว", icon="🗑️")

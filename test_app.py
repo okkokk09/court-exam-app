@@ -257,32 +257,32 @@ class TestQuizApp(unittest.TestCase):
             __getattr__ = dict.get
             __setattr__ = dict.__setitem__
 
-        # 1. User 1 answers a question wrongly
+        # 1. เฟิส answers a question wrongly
         q1 = db.get_all_questions()[0]
         qid1 = q1['id']
         wrong_ans = (q1['answer_index'] + 1) % 4
         
-        db.record_answer(qid1, wrong_ans, is_correct=False, username='User 1')
+        db.record_answer(qid1, wrong_ans, is_correct=False, username='เฟิส')
         
-        # User 1 should have this in mistake bank, User 2 should NOT
-        user1_mistakes = [m['id'] for m in db.get_mistake_questions(username='User 1')]
-        user2_mistakes = [m['id'] for m in db.get_mistake_questions(username='User 2')]
+        # เฟิส should have this in mistake bank, ก้อง should NOT
+        user1_mistakes = [m['id'] for m in db.get_mistake_questions(username='เฟิส')]
+        user2_mistakes = [m['id'] for m in db.get_mistake_questions(username='ก้อง')]
         self.assertIn(qid1, user1_mistakes)
         self.assertNotIn(qid1, user2_mistakes)
         
         # 2. Bookmarks isolation
-        db.toggle_bookmark(qid1, username='User 1')
-        user1_bms = db.get_all_bookmarks(username='User 1')
-        user2_bms = db.get_all_bookmarks(username='User 2')
+        db.toggle_bookmark(qid1, username='เฟิส')
+        user1_bms = db.get_all_bookmarks(username='เฟิส')
+        user2_bms = db.get_all_bookmarks(username='ก้อง')
         self.assertIn(qid1, user1_bms)
         self.assertNotIn(qid1, user2_bms)
         
         # 3. Exam sessions isolation
-        u1_count_before = db.get_dashboard_stats(username='User 1')['total_exams']
+        u1_count_before = db.get_dashboard_stats(username='เฟิส')['total_exams']
         
         state_u2 = DummySessionState()
         quiz_engine.init_session_state(state_u2)
-        state_u2.current_user = 'User 2'
+        state_u2.current_user = 'ก้อง'
         quiz_engine.start_simulation_exam(state_u2, count=10, duration_minutes=15)
         for i in range(10):
             state_u2.user_answers[i] = state_u2.exam_questions[i]['answer_index']
@@ -291,18 +291,18 @@ class TestQuizApp(unittest.TestCase):
         self.assertEqual(res_u2['score'], 10)
         
         # Verify stats isolation
-        stats_u1 = db.get_dashboard_stats(username='User 1')
-        stats_u2 = db.get_dashboard_stats(username='User 2')
-        self.assertEqual(stats_u1['total_exams'], u1_count_before) # User 1 count remains unchanged
-        self.assertEqual(stats_u2['total_exams'], 1) # User 2 took 1 exam
+        stats_u1 = db.get_dashboard_stats(username='เฟิส')
+        stats_u2 = db.get_dashboard_stats(username='ก้อง')
+        self.assertEqual(stats_u1['total_exams'], u1_count_before) # เฟิส count remains unchanged
+        self.assertEqual(stats_u2['total_exams'], 1) # ก้อง took 1 exam
         
-        # 4. Selective Reset Isolation (Reset User 1 only)
-        db.reset_all_statistics(username='User 1')
-        self.assertEqual(len(db.get_all_bookmarks(username='User 1')), 0)
-        self.assertEqual(db.get_dashboard_stats(username='User 1')['total_exams'], 0)
+        # 4. Selective Reset Isolation (Reset เฟิส only)
+        db.reset_all_statistics(username='เฟิส')
+        self.assertEqual(len(db.get_all_bookmarks(username='เฟิส')), 0)
+        self.assertEqual(db.get_dashboard_stats(username='เฟิส')['total_exams'], 0)
         
-        # User 2 exam history must remain intact
-        stats_u2_after = db.get_dashboard_stats(username='User 2')
+        # ก้อง exam history must remain intact
+        stats_u2_after = db.get_dashboard_stats(username='ก้อง')
         self.assertEqual(stats_u2_after['total_exams'], 1)
 
     def test_time_formatting(self):
