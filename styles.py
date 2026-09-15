@@ -140,6 +140,10 @@ def get_custom_css(theme_key='court_navy'):
     
     is_dark = (theme_key == 'dark_obsidian')
     card_shadow = '0 4px 20px rgba(0, 0, 0, 0.4)' if is_dark else '0 4px 20px rgba(0, 0, 0, 0.06)'
+    exp_bg = 'rgba(34, 197, 94, 0.15)' if is_dark else '#f0fdf4'
+    exp_text = '#86efac' if is_dark else '#166534'
+    exp_wrong_bg = 'rgba(239, 68, 68, 0.15)' if is_dark else '#fef2f2'
+    exp_wrong_text = '#fca5a5' if is_dark else '#991b1b'
     
     return f'''
     <style>
@@ -439,23 +443,23 @@ def get_custom_css(theme_key='court_navy'):
 
     /* Explanation & Law Ref Box */
     .explanation-box {{
-        background: #f0fdf4;
+        background: {exp_bg};
         border-left: 4px solid #22c55e;
         padding: 16px 20px;
         border-radius: 0 12px 12px 0;
         margin-top: 16px;
-        color: #166534;
+        color: {exp_text};
         font-size: 0.98rem;
         line-height: 1.6;
     }}
 
     .explanation-wrong-box {{
-        background: #fef2f2;
+        background: {exp_wrong_bg};
         border-left: 4px solid #ef4444;
         padding: 16px 20px;
         border-radius: 0 12px 12px 0;
         margin-top: 16px;
-        color: #991b1b;
+        color: {exp_wrong_text};
         font-size: 0.98rem;
         line-height: 1.6;
     }}
@@ -573,6 +577,104 @@ def get_custom_css(theme_key='court_navy'):
         white-space: normal !important;
         word-break: break-word !important;
         overflow-wrap: break-word !important;
+    }}
+
+    /* Unselected Choice Option After Answered (Theme-Aware) */
+    .unselected-choice {{
+        padding: 14px 20px !important;
+        background-color: {t['radio_label_bg']} !important;
+        border-radius: 12px !important;
+        margin-bottom: 10px !important;
+        border: 2px solid {t['radio_label_border']} !important;
+        color: {t['text_color']} !important;
+        font-size: 1.05rem !important;
+        line-height: 1.6 !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        opacity: 0.75;
+        box-sizing: border-box !important;
+        display: block !important;
+        width: 100% !important;
+    }}
+
+    .unselected-choice b {{
+        color: {t['text_color']} !important;
+        font-weight: 700 !important;
+    }}
+
+    /* Quiz Info Bar (Top Bar) */
+    .quiz-info-bar {{
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background-color: {t['card_bg']} !important;
+        padding: 12px 18px;
+        border-radius: 12px;
+        border: 1px solid {t['card_border']} !important;
+        margin-bottom: 16px;
+        box-shadow: {card_shadow};
+    }}
+
+    .quiz-info-title {{
+        font-weight: 700;
+        color: {t['primary_color']} !important;
+        font-size: 1.05rem;
+    }}
+
+    .quiz-info-meta {{
+        font-size: 0.85rem;
+        color: {t['text_color']} !important;
+        opacity: 0.75;
+    }}
+
+    /* Sidebar Summary Stats Box */
+    .summary-stats-box {{
+        background-color: {t['card_bg']} !important;
+        border: 1px solid {t['card_border']} !important;
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 12px;
+        color: {t['text_color']} !important;
+        box-shadow: {card_shadow};
+    }}
+
+    .summary-stats-box .stat-row {{
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+        color: {t['text_color']} !important;
+    }}
+
+    /* Legal Reference Expander Theme Styling */
+    .legal-statute-card {{
+        background-color: {t['card_bg']} !important;
+        border: 1.5px solid {t['card_border']} !important;
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin-bottom: 12px;
+    }}
+
+    .legal-statute-content {{
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: {t['text_color']} !important;
+        line-height: 1.6;
+        background-color: {t['radio_label_bg']} !important;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border-left: 4px solid {t['primary_color']};
+        white-space: pre-line;
+    }}
+
+    .legal-precedent-box {{
+        background-color: {'rgba(59, 130, 246, 0.15)' if is_dark else '#eff6ff'};
+        border-left: 4px solid #3b82f6;
+        border-radius: 0 8px 8px 0;
+        padding: 10px 14px;
+        margin-top: 12px;
+        font-size: 0.88rem;
+        color: {'#93c5fd' if is_dark else '#1e3a8a'};
     }}
 
     /* Hide Streamlit default hamburger menu & footer */

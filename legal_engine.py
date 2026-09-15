@@ -372,28 +372,28 @@ def render_legal_reference_expander(question_obj, expanded=False):
     
     with st.expander(expander_title, expanded=expanded):
         st.markdown(f'''
-        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 16px 20px; margin-bottom: 12px;">
-            <div style="font-size: 0.85rem; font-weight: 700; color: #1e40af; text-transform: uppercase; margin-bottom: 4px;">
+        <div class="legal-statute-card">
+            <div style="font-size: 0.85rem; font-weight: 700; color: #3b82f6; text-transform: uppercase; margin-bottom: 6px;">
                 🏛️ ตัวบทกฎหมาย / ระเบียบฉบับเต็ม
             </div>
-            <div style="font-size: 1.05rem; font-weight: 600; color: #0f172a; line-height: 1.6; background: #ffffff; padding: 12px 16px; border-radius: 8px; border-left: 4px solid #1e40af; white-space: pre-line;">
+            <div class="legal-statute-content">
                 {legal_data['statute_text']}
             </div>
         </div>
         ''', unsafe_allow_html=True)
         
-        st.markdown("<div style='font-weight: 700; color: #065f46; font-size: 0.95rem; margin: 12px 0 6px 0;'>⚖️ การแยกแยะองค์ประกอบกฎหมาย (Legal Elements Checklist):</div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-weight: 700; color: #10b981; font-size: 0.95rem; margin: 12px 0 6px 0;'>⚖️ การแยกแยะองค์ประกอบกฎหมาย (Legal Elements Checklist):</div>", unsafe_allow_html=True)
         for elem in legal_data['elements']:
             st.markdown(f'''
-            <div style="display: flex; align-items: flex-start; margin-bottom: 6px; font-size: 0.92rem; color: #1e293b;">
-                <span style="color: #059669; font-weight: bold; margin-right: 8px; font-size: 1.1rem;">✔</span>
+            <div style="display: flex; align-items: flex-start; margin-bottom: 6px; font-size: 0.92rem; opacity: 0.9;">
+                <span style="color: #10b981; font-weight: bold; margin-right: 8px; font-size: 1.1rem;">✔</span>
                 <span>{elem}</span>
             </div>
             ''', unsafe_allow_html=True)
             
         if legal_data.get('precedent'):
             st.markdown(f'''
-            <div style="background: #eff6ff; border-left: 4px solid #3b82f6; border-radius: 0 8px 8px 0; padding: 10px 14px; margin-top: 12px; font-size: 0.88rem; color: #1e3a8a;">
+            <div class="legal-precedent-box">
                 <b>📑 แนวคำพิพากษาศาลฎีกา / ระเบียบที่เกี่ยวข้อง:</b><br>
                 {legal_data['precedent']}
             </div>

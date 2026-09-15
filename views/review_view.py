@@ -128,8 +128,8 @@ def render_interactive_review(questions):
             )
 
         header_html = (
-            f'<div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 18px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px;">'
-            f'<div><span style="font-weight: 700; color: #1e3a8a;">ข้อที่ {idx + 1} จาก {total}</span></div>'
+            f'<div class="quiz-info-bar">'
+            f'<div><span class="quiz-info-title">ข้อที่ {idx + 1} จาก {total}</span></div>'
             f'<div>{stat_badges}</div>'
             f'</div>'
         )
@@ -144,7 +144,7 @@ def render_interactive_review(questions):
             st.markdown(f'''
             <div class="question-header">
                 <div>
-                    <span class="q-number" style="background: #fee2e2; color: #991b1b;">ข้อที่ {idx + 1} / {total}</span>
+                    <span class="q-number" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid #ef4444;">ข้อที่ {idx + 1} / {total} (ทบทวน)</span>
                 </div>
                 <div style="font-size: 0.85rem; color: #94a3b8;">
                     ID: {q['id']}
@@ -216,7 +216,7 @@ def render_interactive_review(questions):
                     st.error(f"**{c_letter}.**  {opt}  *(คุณเลือกข้อนี้ ❌)*")
                 else:
                     st.markdown(
-                        f'<div style="padding: 12px 16px; background: #f8fafc; border-radius: 10px; margin-bottom: 8px; border: 1px solid #e2e8f0; color: #475569; font-size: 1rem; line-height: 1.55; word-break: break-word; overflow-wrap: break-word;">'
+                        f'<div class="unselected-choice">'
                         f'<b>{c_letter}.</b> {opt}</div>',
                         unsafe_allow_html=True
                     )
@@ -302,12 +302,12 @@ def render_interactive_review(questions):
         acc_color = '#10b981' if acc >= 60 else '#ef4444'
         
         st.markdown(
-            f'<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 12px;">'
+            f'<div class="summary-stats-box">'
             f'<div style="font-weight: 700; color: #4338ca; margin-bottom: 8px; font-size: 0.9rem;">🎯 สรุปผลการซ่อมข้อผิด</div>'
-            f'<div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;"><span style="color: #64748b;">ทบทวนแล้ว:</span><b style="color: #0f172a;">{ans_count} / {total} ข้อ</b></div>'
-            f'<div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;"><span style="color: #10b981;">แก้ไขถูก:</span><b style="color: #10b981;">{correct_count} ข้อ</b></div>'
-            f'<div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;"><span style="color: #ef4444;">ยังผิดอยู่:</span><b style="color: #ef4444;">{wrong_count} ข้อ</b></div>'
-            f'<div style="display: flex; justify-content: space-between; font-size: 0.85rem;"><span style="color: #64748b;">อัตราแก้สำเร็จ:</span><b style="color: {acc_color};">{acc}%</b></div>'
+            f'<div class="stat-row"><span style="opacity: 0.75;">ทบทวนแล้ว:</span><b>{ans_count} / {total} ข้อ</b></div>'
+            f'<div class="stat-row"><span style="color: #10b981;">แก้ไขถูก:</span><b style="color: #10b981;">{correct_count} ข้อ</b></div>'
+            f'<div class="stat-row"><span style="color: #ef4444;">ยังผิดอยู่:</span><b style="color: #ef4444;">{wrong_count} ข้อ</b></div>'
+            f'<div class="stat-row"><span style="opacity: 0.75;">อัตราแก้สำเร็จ:</span><b style="color: {acc_color};">{acc}%</b></div>'
             f'</div>',
             unsafe_allow_html=True
         )

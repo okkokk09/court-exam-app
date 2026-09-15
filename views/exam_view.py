@@ -146,7 +146,7 @@ def render_full_exam_lobby():
         # Compact Question Bank Info
         law_all = len(db.get_all_questions(subject='law'))
         com_all = len(db.get_all_questions(subject='computer'))
-        st.markdown(f'''<div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; font-size: 0.82rem; color: #64748b; display: flex; justify-content: space-between;">
+        st.markdown(f'''<div class="quiz-info-bar" style="padding: 10px 14px; font-size: 0.82rem; margin-bottom: 0;">
 <span>คลังข้อสอบ: <b>{law_all + com_all} ข้อ</b></span>
 <span>(กฎหมาย {law_all} + คอม {com_all})</span>
 </div>''', unsafe_allow_html=True)

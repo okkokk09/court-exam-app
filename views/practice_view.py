@@ -85,12 +85,12 @@ def render_practice_view():
     with col_main:
         # Header bar
         st.markdown(f'''
-        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 18px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px;">
+        <div class="quiz-info-bar">
             <div>
-                <span style="font-weight: 700; color: #047857;">ข้อที่ {idx + 1} จาก {total}</span>
+                <span class="quiz-info-title">ข้อที่ {idx + 1} จาก {total}</span>
             </div>
             <div>
-                <span style="font-size: 0.85rem; color: #64748b;">ID: {q['id']} ({cur_user})</span>
+                <span class="quiz-info-meta">ID: {q['id']} ({cur_user})</span>
             </div>
         </div>
         ''', unsafe_allow_html=True)
@@ -103,7 +103,7 @@ def render_practice_view():
             st.markdown(f'''
             <div class="question-header">
                 <div>
-                    <span class="q-number" style="background: #ecfdf5; color: #065f46;">ข้อที่ {idx + 1} / {total}</span>
+                    <span class="q-number">ข้อที่ {idx + 1} / {total}</span>
                 </div>
                 <div style="font-size: 0.85rem; color: #94a3b8;">
                     ID: {q['id']}
@@ -160,7 +160,7 @@ def render_practice_view():
                     st.error(f"**{c_letter}.**  {opt}  *(คุณเลือกข้อนี้ ❌)*")
                 else:
                     st.markdown(f'''
-                    <div style="padding: 12px 16px; background: #f8fafc; border-radius: 10px; margin-bottom: 8px; border: 1px solid #e2e8f0; color: #475569; font-size: 1rem; line-height: 1.55; word-break: break-word; overflow-wrap: break-word;">
+                    <div class="unselected-choice">
                         <b>{c_letter}.</b> {opt}
                     </div>
                     ''', unsafe_allow_html=True)
@@ -246,22 +246,22 @@ def render_practice_view():
         acc = int((correct_count / ans_count * 100)) if ans_count > 0 else 0
         
         st.markdown(f'''
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 12px;">
+        <div class="summary-stats-box">
             <div style="font-weight: 700; color: #047857; margin-bottom: 8px; font-size: 0.9rem;">📊 สรุปการฝึกทำชุดนี้</div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
-                <span style="color: #64748b;">ทำแล้ว:</span>
-                <b style="color: #0f172a;">{ans_count} / {total} ข้อ</b>
+            <div class="stat-row">
+                <span style="opacity: 0.75;">ทำแล้ว:</span>
+                <b>{ans_count} / {total} ข้อ</b>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+            <div class="stat-row">
                 <span style="color: #10b981;">ตอบถูก:</span>
                 <b style="color: #10b981;">{correct_count} ข้อ</b>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+            <div class="stat-row">
                 <span style="color: #ef4444;">ตอบผิด:</span>
                 <b style="color: #ef4444;">{wrong_count} ข้อ</b>
             </div>
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-                <span style="color: #64748b;">ความแม่นยำ:</span>
+            <div class="stat-row">
+                <span style="opacity: 0.75;">ความแม่นยำ:</span>
                 <b style="color: {'#10b981' if acc >= 60 else '#ef4444'};">{acc}%</b>
             </div>
         </div>
