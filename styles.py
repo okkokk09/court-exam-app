@@ -317,6 +317,7 @@ def get_custom_css(theme_key='court_navy'):
         display: flex;
         flex-direction: column;
         gap: 12px;
+        width: 100% !important;
     }}
 
     div[data-testid="stRadio"] div[role="radiogroup"] > label {{
@@ -331,9 +332,14 @@ def get_custom_css(theme_key='court_navy'):
         display: flex !important;
         align-items: center !important;
         width: 100% !important;
-        max-width: 640px !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 52px !important;
         box-sizing: border-box !important;
         transform: none !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
     }}
 
     div[data-testid="stRadio"] div[role="radiogroup"] > label:hover {{
@@ -359,7 +365,10 @@ def get_custom_css(theme_key='court_navy'):
         color: {t['text_color']} !important;
         font-size: 1.05rem !important;
         font-weight: 500 !important;
-        line-height: 1.55 !important;
+        line-height: 1.6 !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
     }}
 
     div[data-testid="stRadio"] div[role="radiogroup"] label[data-checked="true"] p,
@@ -506,13 +515,18 @@ def get_custom_css(theme_key='court_navy'):
         padding: 14px 20px !important;
         border-radius: 12px !important;
         font-size: 1.05rem !important;
-        line-height: 1.55 !important;
+        line-height: 1.6 !important;
         border: 2px solid {t['radio_label_border']} !important;
         background-color: {t['radio_label_bg']} !important;
         box-shadow: none !important;
         transform: none !important;
         width: 100% !important;
-        max-width: 640px !important;
+        max-width: 100% !important;
+        height: auto !important;
+        min-height: 52px !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
     }}
 
     div[data-testid="stButton"] > button:has(strong):hover,
@@ -532,6 +546,9 @@ def get_custom_css(theme_key='court_navy'):
         display: flex !important;
         justify-content: flex-start !important;
         align-items: center !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
     }}
 
     div[data-testid="stButton"] > button:has(strong) p,
@@ -540,15 +557,22 @@ def get_custom_css(theme_key='court_navy'):
         margin: 0 !important;
         font-size: 1.05rem !important;
         font-weight: 500 !important;
-        line-height: 1.55 !important;
+        line-height: 1.6 !important;
         color: {t['text_color']} !important;
         width: 100% !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
     }}
 
-    /* Constrain feedback alert boxes in choice area */
+    /* Feedback alert boxes in choice area */
     div[data-testid="stAlert"] {{
-        max-width: 640px !important;
+        width: 100% !important;
+        max-width: 100% !important;
         border-radius: 12px !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
     }}
 
     /* Hide Streamlit default hamburger menu & footer */

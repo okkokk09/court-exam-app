@@ -160,7 +160,7 @@ def render_practice_view():
                     st.error(f"**{c_letter}.**  {opt}  *(คุณเลือกข้อนี้ ❌)*")
                 else:
                     st.markdown(f'''
-                    <div style="padding: 10px 14px; background: #f8fafc; border-radius: 8px; margin-bottom: 6px; border: 1px solid #e2e8f0; color: #475569; font-size: 0.95rem;">
+                    <div style="padding: 12px 16px; background: #f8fafc; border-radius: 10px; margin-bottom: 8px; border: 1px solid #e2e8f0; color: #475569; font-size: 1rem; line-height: 1.55; word-break: break-word; overflow-wrap: break-word;">
                         <b>{c_letter}.</b> {opt}
                     </div>
                     ''', unsafe_allow_html=True)
