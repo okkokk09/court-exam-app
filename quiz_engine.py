@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
 import random
+import re
 import db
 
 def init_session_state(st_session_state):
@@ -42,7 +43,7 @@ def init_session_state(st_session_state):
 def shuffle_question_options(question_dict):
     '''
     Randomizes / shuffles the 4 options of a question dictionary while accurately 
-    updating the answer_index to point to the new shuffled position of the correct answer.
+    updating the answer_index and explanation choice letter to point to the new shuffled position of the correct answer.
     '''
     if not question_dict or 'options' not in question_dict or not question_dict['options']:
         return question_dict
@@ -60,8 +61,21 @@ def shuffle_question_options(question_dict):
     random.shuffle(options)
     
     # Update answer_index to point to new position
+    new_idx = options.index(correct_text)
     q['options'] = options
-    q['answer_index'] = options.index(correct_text)
+    q['answer_index'] = new_idx
+    
+    # Synchronize explanation leading choice letter with new shuffled position
+    choice_letters = ['ก', 'ข', 'ค', 'ง', 'จ']
+    if 'explanation' in q and q['explanation']:
+        new_l = choice_letters[new_idx] if new_idx < len(choice_letters) else ''
+        if new_l:
+            q['explanation'] = re.sub(
+                r'^(เฉลย[:\s]*(?:ข้อ)?\s*)[ก-ฮa-zA-D](\.?)',
+                rf'\g<1>{new_l}\2',
+                q['explanation']
+            )
+            
     return q
 
 def shuffle_questions_list(questions_list):

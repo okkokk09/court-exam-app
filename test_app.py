@@ -129,8 +129,10 @@ class TestQuizApp(unittest.TestCase):
             'id': 'TEST_01',
             'question': 'Sample Question?',
             'options': ['Choice A', 'Choice B', 'Choice C', 'Choice D'],
-            'answer_index': 1 # Choice B
+            'answer_index': 1, # Choice B
+            'explanation': 'เฉลย: ข. Choice B ถูกต้อง'
         }
+        choice_letters = ['ก', 'ข', 'ค', 'ง']
         
         # Test 50 iterations to ensure correct text is always tracked
         for _ in range(50):
@@ -139,6 +141,8 @@ class TestQuizApp(unittest.TestCase):
             self.assertEqual(shuffled['options'][new_idx], 'Choice B', 'Shuffled answer_index must always point to correct choice text')
             self.assertEqual(len(shuffled['options']), 4)
             self.assertEqual(set(shuffled['options']), set(sample_q['options']))
+            expected_prefix = f"เฉลย: {choice_letters[new_idx]}."
+            self.assertTrue(shuffled['explanation'].startswith(expected_prefix), f"Explanation letter must sync to {expected_prefix}")
 
     def test_abandon_exam(self):
         class DummySessionState(dict):
