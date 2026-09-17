@@ -328,7 +328,7 @@ def render_exam_in_progress():
         
         current_answer = st.session_state.user_answers.get(current_idx, None)
         
-        st.markdown("<p style='font-size: 1rem; font-weight: 600; color: #1e3a8a; margin-bottom: 8px;'>📝 เลือกคำตอบที่ถูกต้องที่สุด:</p>", unsafe_allow_html=True)
+        st.markdown("<p class='choice-prompt-title' style='font-size: 1rem; font-weight: 600; margin-bottom: 8px;'>📝 เลือกคำตอบที่ถูกต้องที่สุด:</p>", unsafe_allow_html=True)
         selected_option = st.radio(
             "ตัวเลือกคำตอบ",
             options=list(range(len(options))),

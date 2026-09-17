@@ -308,7 +308,7 @@ def get_custom_css(theme_key='court_navy'):
         margin-bottom: 16px;
     }}
 
-    /* Radio Group Options Styling - Multi-Theme & High Contrast */
+    /* Radio Group Options Styling - Robust, Multi-Theme & High Contrast */
     div[data-testid="stRadio"] {{
         margin-top: 10px;
     }}
@@ -317,21 +317,26 @@ def get_custom_css(theme_key='court_navy'):
         display: none !important;
     }}
 
-    div[data-testid="stRadio"] div[role="radiogroup"] {{
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
+    div[data-testid="stRadio"] [data-testid="stRadioGroup"],
+    div[data-testid="stRadio"] [role="radiogroup"],
+    div[data-testid="stRadioGroup"] {{
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 12px !important;
         width: 100% !important;
     }}
 
-    div[data-testid="stRadio"] div[role="radiogroup"] > label {{
+    div[data-testid="stRadio"] label,
+    div[data-testid="stRadioGroup"] label,
+    div[data-testid="stRadio"] [data-baseweb="radio"],
+    div[role="radiogroup"] label {{
         background-color: {t['radio_label_bg']} !important;
         border: 2px solid {t['radio_label_border']} !important;
         border-radius: 12px !important;
         padding: 14px 20px !important;
         margin: 0 !important;
         cursor: pointer !important;
-        transition: border-color 0.15s ease-in-out !important;
+        transition: all 0.15s ease-in-out !important;
         box-shadow: none !important;
         display: flex !important;
         align-items: center !important;
@@ -346,16 +351,20 @@ def get_custom_css(theme_key='court_navy'):
         overflow-wrap: break-word !important;
     }}
 
-    div[data-testid="stRadio"] div[role="radiogroup"] > label:hover {{
+    div[data-testid="stRadio"] label:hover,
+    div[data-testid="stRadioGroup"] label:hover,
+    div[data-testid="stRadio"] [data-baseweb="radio"]:hover {{
         background-color: {t['radio_label_bg']} !important;
         border-color: {t['radio_hover_border']} !important;
         transform: none !important;
         box-shadow: none !important;
     }}
 
-    div[data-testid="stRadio"] div[role="radiogroup"] > label[data-checked="true"],
-    div[data-testid="stRadio"] div[role="radiogroup"] > label:has(input:checked) {{
-        background-color: {t['radio_label_bg']} !important;
+    div[data-testid="stRadio"] label[data-checked="true"],
+    div[data-testid="stRadio"] label:has(input:checked),
+    div[data-testid="stRadioGroup"] label[data-checked="true"],
+    div[data-testid="stRadioGroup"] label:has(input:checked) {{
+        background-color: {t['radio_active_bg']} !important;
         border-color: {t['radio_active_border']} !important;
         border-width: 2px !important;
         box-shadow: none !important;
@@ -363,9 +372,14 @@ def get_custom_css(theme_key='court_navy'):
     }}
 
     /* Enforce clear contrast for text inside choice labels */
-    div[data-testid="stRadio"] div[role="radiogroup"] label p,
-    div[data-testid="stRadio"] div[role="radiogroup"] label span,
-    div[data-testid="stRadio"] div[role="radiogroup"] label div {{
+    div[data-testid="stRadio"] label p,
+    div[data-testid="stRadio"] label span,
+    div[data-testid="stRadio"] label div,
+    div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p,
+    div[data-testid="stRadioGroup"] label p,
+    div[data-testid="stRadioGroup"] label span,
+    div[data-testid="stRadioGroup"] label div,
+    div[data-testid="stRadioGroup"] [data-testid="stMarkdownContainer"] p {{
         color: {t['text_color']} !important;
         font-size: 1.05rem !important;
         font-weight: 500 !important;
@@ -373,12 +387,112 @@ def get_custom_css(theme_key='court_navy'):
         white-space: normal !important;
         word-break: break-word !important;
         overflow-wrap: break-word !important;
+        margin-bottom: 0 !important;
     }}
 
-    div[data-testid="stRadio"] div[role="radiogroup"] label[data-checked="true"] p,
-    div[data-testid="stRadio"] div[role="radiogroup"] label:has(input:checked) p {{
-        color: {t['text_color']} !important;
-        font-weight: 500 !important;
+    div[data-testid="stRadio"] label[data-checked="true"] p,
+    div[data-testid="stRadio"] label:has(input:checked) p,
+    div[data-testid="stRadioGroup"] label[data-checked="true"] p,
+    div[data-testid="stRadioGroup"] label:has(input:checked) p {{
+        color: {t['radio_active_text'] if 'radio_active_text' in t else t['text_color']} !important;
+        font-weight: 600 !important;
+    }}
+
+    .choice-prompt-title {{
+        color: {t['primary_color']} !important;
+    }}
+
+    /* Dark Mode Auto-Detection & High-Contrast Overrides */
+    @media (prefers-color-scheme: dark) {{
+        div[data-testid="stRadio"] label,
+        div[data-testid="stRadioGroup"] label,
+        div[data-testid="stRadio"] [data-baseweb="radio"],
+        div[role="radiogroup"] label {{
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }}
+
+        div[data-testid="stRadio"] label:hover,
+        div[data-testid="stRadioGroup"] label:hover,
+        div[data-testid="stRadio"] [data-baseweb="radio"]:hover {{
+            border-color: #38bdf8 !important;
+            background-color: #1e293b !important;
+        }}
+
+        div[data-testid="stRadio"] label[data-checked="true"],
+        div[data-testid="stRadio"] label:has(input:checked),
+        div[data-testid="stRadioGroup"] label[data-checked="true"],
+        div[data-testid="stRadioGroup"] label:has(input:checked) {{
+            background-color: #0f172a !important;
+            border-color: #38bdf8 !important;
+            border-width: 2px !important;
+        }}
+
+        div[data-testid="stRadio"] label p,
+        div[data-testid="stRadio"] label span,
+        div[data-testid="stRadio"] label div,
+        div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p,
+        div[data-testid="stRadioGroup"] label p,
+        div[data-testid="stRadioGroup"] label span,
+        div[data-testid="stRadioGroup"] label div,
+        div[data-testid="stRadioGroup"] [data-testid="stMarkdownContainer"] p,
+        div[data-testid="stRadio"] label[data-checked="true"] p,
+        div[data-testid="stRadio"] label:has(input:checked) p,
+        div[data-testid="stRadioGroup"] label[data-checked="true"] p,
+        div[data-testid="stRadioGroup"] label:has(input:checked) p {{
+            color: #f8fafc !important;
+        }}
+
+        .choice-prompt-title {{
+            color: #38bdf8 !important;
+        }}
+
+        .unselected-choice {{
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #94a3b8 !important;
+        }}
+
+        .unselected-choice b {{
+            color: #cbd5e1 !important;
+        }}
+    }}
+
+    /* Streamlit data-theme dark overrides */
+    [data-theme="dark"] div[data-testid="stRadio"] label,
+    [data-theme="dark"] div[data-testid="stRadioGroup"] label,
+    [data-theme="dark"] div[data-testid="stRadio"] [data-baseweb="radio"],
+    [data-theme="dark"] div[role="radiogroup"] label,
+    [data-base-theme="dark"] div[data-testid="stRadio"] label,
+    [data-base-theme="dark"] div[data-testid="stRadioGroup"] label,
+    [data-base-theme="dark"] div[data-testid="stRadio"] [data-baseweb="radio"],
+    [data-base-theme="dark"] div[role="radiogroup"] label {{
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+    }}
+
+    [data-theme="dark"] div[data-testid="stRadio"] label p,
+    [data-theme="dark"] div[data-testid="stRadio"] label span,
+    [data-theme="dark"] div[data-testid="stRadio"] label div,
+    [data-theme="dark"] div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p,
+    [data-theme="dark"] div[data-testid="stRadioGroup"] label p,
+    [data-theme="dark"] div[data-testid="stRadioGroup"] label span,
+    [data-theme="dark"] div[data-testid="stRadioGroup"] label div,
+    [data-theme="dark"] div[data-testid="stRadioGroup"] [data-testid="stMarkdownContainer"] p,
+    [data-base-theme="dark"] div[data-testid="stRadio"] label p,
+    [data-base-theme="dark"] div[data-testid="stRadio"] label span,
+    [data-base-theme="dark"] div[data-testid="stRadio"] label div,
+    [data-base-theme="dark"] div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p,
+    [data-base-theme="dark"] div[data-testid="stRadioGroup"] label p,
+    [data-base-theme="dark"] div[data-testid="stRadioGroup"] label span,
+    [data-base-theme="dark"] div[data-testid="stRadioGroup"] label div,
+    [data-base-theme="dark"] div[data-testid="stRadioGroup"] [data-testid="stMarkdownContainer"] p {{
+        color: #f8fafc !important;
+    }}
+
+    [data-theme="dark"] .choice-prompt-title,
+    [data-base-theme="dark"] .choice-prompt-title {{
+        color: #38bdf8 !important;
     }}
 
     /* Result Card Hero */
