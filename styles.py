@@ -308,13 +308,21 @@ def get_custom_css(theme_key='court_navy'):
         margin-bottom: 16px;
     }}
 
-    /* Radio Group Options Styling - Robust, Multi-Theme & High Contrast */
+    /* Radio Group Options Styling - Robust, Full Width & Multi-Theme */
     div[data-testid="stRadio"] {{
         margin-top: 10px;
+        width: 100% !important;
     }}
 
-    div[data-testid="stRadio"] > label {{
+    /* Strictly hide widget label ('ตัวเลือกคำตอบ') so only choices are visible */
+    div[data-testid="stRadio"] > label,
+    div[data-testid="stRadio"] [data-testid="stWidgetLabel"],
+    div[data-testid="stRadio"] > div:first-child:not([data-testid="stRadioGroup"]):not([role="radiogroup"]) {{
         display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
     }}
 
     div[data-testid="stRadio"] [data-testid="stRadioGroup"],
@@ -322,14 +330,18 @@ def get_custom_css(theme_key='court_navy'):
     div[data-testid="stRadioGroup"] {{
         display: flex !important;
         flex-direction: column !important;
+        align-items: stretch !important;
         gap: 12px !important;
         width: 100% !important;
+        max-width: 100% !important;
     }}
 
-    div[data-testid="stRadio"] label,
+    /* All choice cards: exactly equal width (100% full width) */
     div[data-testid="stRadioGroup"] label,
-    div[data-testid="stRadio"] [data-baseweb="radio"],
-    div[role="radiogroup"] label {{
+    div[role="radiogroup"] label,
+    div[data-testid="stRadioGroup"] [data-baseweb="radio"],
+    div[role="radiogroup"] [data-baseweb="radio"],
+    div[data-testid="stRadio"] [data-baseweb="radio"] {{
         background-color: {t['radio_label_bg']} !important;
         border: 2px solid {t['radio_label_border']} !important;
         border-radius: 12px !important;
@@ -341,7 +353,9 @@ def get_custom_css(theme_key='court_navy'):
         display: flex !important;
         align-items: center !important;
         width: 100% !important;
+        min-width: 100% !important;
         max-width: 100% !important;
+        flex: 1 1 100% !important;
         height: auto !important;
         min-height: 52px !important;
         box-sizing: border-box !important;
@@ -351,8 +365,8 @@ def get_custom_css(theme_key='court_navy'):
         overflow-wrap: break-word !important;
     }}
 
-    div[data-testid="stRadio"] label:hover,
     div[data-testid="stRadioGroup"] label:hover,
+    div[role="radiogroup"] label:hover,
     div[data-testid="stRadio"] [data-baseweb="radio"]:hover {{
         background-color: {t['radio_label_bg']} !important;
         border-color: {t['radio_hover_border']} !important;
@@ -360,10 +374,12 @@ def get_custom_css(theme_key='court_navy'):
         box-shadow: none !important;
     }}
 
-    div[data-testid="stRadio"] label[data-checked="true"],
-    div[data-testid="stRadio"] label:has(input:checked),
     div[data-testid="stRadioGroup"] label[data-checked="true"],
-    div[data-testid="stRadioGroup"] label:has(input:checked) {{
+    div[data-testid="stRadioGroup"] label:has(input:checked),
+    div[role="radiogroup"] label[data-checked="true"],
+    div[role="radiogroup"] label:has(input:checked),
+    div[data-testid="stRadio"] [data-baseweb="radio"][data-checked="true"],
+    div[data-testid="stRadio"] [data-baseweb="radio"]:has(input:checked) {{
         background-color: {t['radio_active_bg']} !important;
         border-color: {t['radio_active_border']} !important;
         border-width: 2px !important;
@@ -371,15 +387,16 @@ def get_custom_css(theme_key='court_navy'):
         transform: none !important;
     }}
 
-    /* Enforce clear contrast for text inside choice labels */
-    div[data-testid="stRadio"] label p,
-    div[data-testid="stRadio"] label span,
-    div[data-testid="stRadio"] label div,
-    div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p,
+    /* Enforce clear contrast and full-width alignment for text inside choice labels */
     div[data-testid="stRadioGroup"] label p,
     div[data-testid="stRadioGroup"] label span,
     div[data-testid="stRadioGroup"] label div,
-    div[data-testid="stRadioGroup"] [data-testid="stMarkdownContainer"] p {{
+    div[data-testid="stRadioGroup"] [data-testid="stMarkdownContainer"] p,
+    div[role="radiogroup"] label p,
+    div[role="radiogroup"] label span,
+    div[role="radiogroup"] label div,
+    div[role="radiogroup"] [data-testid="stMarkdownContainer"] p,
+    div[data-testid="stRadio"] [data-baseweb="radio"] p {{
         color: {t['text_color']} !important;
         font-size: 1.05rem !important;
         font-weight: 500 !important;
@@ -390,10 +407,12 @@ def get_custom_css(theme_key='court_navy'):
         margin-bottom: 0 !important;
     }}
 
-    div[data-testid="stRadio"] label[data-checked="true"] p,
-    div[data-testid="stRadio"] label:has(input:checked) p,
     div[data-testid="stRadioGroup"] label[data-checked="true"] p,
-    div[data-testid="stRadioGroup"] label:has(input:checked) p {{
+    div[data-testid="stRadioGroup"] label:has(input:checked) p,
+    div[role="radiogroup"] label[data-checked="true"] p,
+    div[role="radiogroup"] label:has(input:checked) p,
+    div[data-testid="stRadio"] [data-baseweb="radio"][data-checked="true"] p,
+    div[data-testid="stRadio"] [data-baseweb="radio"]:has(input:checked) p {{
         color: {t['radio_active_text'] if 'radio_active_text' in t else t['text_color']} !important;
         font-weight: 600 !important;
     }}
@@ -404,42 +423,57 @@ def get_custom_css(theme_key='court_navy'):
 
     /* Dark Mode Auto-Detection & High-Contrast Overrides */
     @media (prefers-color-scheme: dark) {{
-        div[data-testid="stRadio"] label,
-        div[data-testid="stRadioGroup"] label,
-        div[data-testid="stRadio"] [data-baseweb="radio"],
-        div[role="radiogroup"] label {{
-            background-color: #1e293b !important;
-            border-color: #334155 !important;
+        div[data-testid="stRadio"] > label,
+        div[data-testid="stRadio"] [data-testid="stWidgetLabel"],
+        div[data-testid="stRadio"] > div:first-child:not([data-testid="stRadioGroup"]):not([role="radiogroup"]) {{
+            display: none !important;
         }}
 
-        div[data-testid="stRadio"] label:hover,
+        div[data-testid="stRadioGroup"] label,
+        div[role="radiogroup"] label,
+        div[data-testid="stRadioGroup"] [data-baseweb="radio"],
+        div[role="radiogroup"] [data-baseweb="radio"],
+        div[data-testid="stRadio"] [data-baseweb="radio"] {{
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            flex: 1 1 100% !important;
+        }}
+
         div[data-testid="stRadioGroup"] label:hover,
+        div[role="radiogroup"] label:hover,
         div[data-testid="stRadio"] [data-baseweb="radio"]:hover {{
             border-color: #38bdf8 !important;
             background-color: #1e293b !important;
         }}
 
-        div[data-testid="stRadio"] label[data-checked="true"],
-        div[data-testid="stRadio"] label:has(input:checked),
         div[data-testid="stRadioGroup"] label[data-checked="true"],
-        div[data-testid="stRadioGroup"] label:has(input:checked) {{
+        div[data-testid="stRadioGroup"] label:has(input:checked),
+        div[role="radiogroup"] label[data-checked="true"],
+        div[role="radiogroup"] label:has(input:checked),
+        div[data-testid="stRadio"] [data-baseweb="radio"][data-checked="true"],
+        div[data-testid="stRadio"] [data-baseweb="radio"]:has(input:checked) {{
             background-color: #0f172a !important;
             border-color: #38bdf8 !important;
             border-width: 2px !important;
         }}
 
-        div[data-testid="stRadio"] label p,
-        div[data-testid="stRadio"] label span,
-        div[data-testid="stRadio"] label div,
-        div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p,
         div[data-testid="stRadioGroup"] label p,
         div[data-testid="stRadioGroup"] label span,
         div[data-testid="stRadioGroup"] label div,
         div[data-testid="stRadioGroup"] [data-testid="stMarkdownContainer"] p,
-        div[data-testid="stRadio"] label[data-checked="true"] p,
-        div[data-testid="stRadio"] label:has(input:checked) p,
+        div[role="radiogroup"] label p,
+        div[role="radiogroup"] label span,
+        div[role="radiogroup"] label div,
+        div[role="radiogroup"] [data-testid="stMarkdownContainer"] p,
+        div[data-testid="stRadio"] [data-baseweb="radio"] p,
         div[data-testid="stRadioGroup"] label[data-checked="true"] p,
-        div[data-testid="stRadioGroup"] label:has(input:checked) p {{
+        div[data-testid="stRadioGroup"] label:has(input:checked) p,
+        div[role="radiogroup"] label[data-checked="true"] p,
+        div[role="radiogroup"] label:has(input:checked) p {{
             color: #f8fafc !important;
         }}
 
@@ -451,6 +485,8 @@ def get_custom_css(theme_key='court_navy'):
             background-color: #1e293b !important;
             border-color: #334155 !important;
             color: #94a3b8 !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
         }}
 
         .unselected-choice b {{
@@ -459,34 +495,40 @@ def get_custom_css(theme_key='court_navy'):
     }}
 
     /* Streamlit data-theme dark overrides */
-    [data-theme="dark"] div[data-testid="stRadio"] label,
-    [data-theme="dark"] div[data-testid="stRadioGroup"] label,
-    [data-theme="dark"] div[data-testid="stRadio"] [data-baseweb="radio"],
-    [data-theme="dark"] div[role="radiogroup"] label,
-    [data-base-theme="dark"] div[data-testid="stRadio"] label,
-    [data-base-theme="dark"] div[data-testid="stRadioGroup"] label,
-    [data-base-theme="dark"] div[data-testid="stRadio"] [data-baseweb="radio"],
-    [data-base-theme="dark"] div[role="radiogroup"] label {{
-        background-color: #1e293b !important;
-        border-color: #334155 !important;
+    [data-theme="dark"] div[data-testid="stRadio"] > label,
+    [data-theme="dark"] div[data-testid="stRadio"] [data-testid="stWidgetLabel"],
+    [data-base-theme="dark"] div[data-testid="stRadio"] > label,
+    [data-base-theme="dark"] div[data-testid="stRadio"] [data-testid="stWidgetLabel"] {{
+        display: none !important;
     }}
 
-    [data-theme="dark"] div[data-testid="stRadio"] label p,
-    [data-theme="dark"] div[data-testid="stRadio"] label span,
-    [data-theme="dark"] div[data-testid="stRadio"] label div,
-    [data-theme="dark"] div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p,
+    [data-theme="dark"] div[data-testid="stRadioGroup"] label,
+    [data-theme="dark"] div[role="radiogroup"] label,
+    [data-theme="dark"] div[data-testid="stRadio"] [data-baseweb="radio"],
+    [data-base-theme="dark"] div[data-testid="stRadioGroup"] label,
+    [data-base-theme="dark"] div[role="radiogroup"] label,
+    [data-base-theme="dark"] div[data-testid="stRadio"] [data-baseweb="radio"] {{
+        background-color: #1e293b !important;
+        border-color: #334155 !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        flex: 1 1 100% !important;
+    }}
+
     [data-theme="dark"] div[data-testid="stRadioGroup"] label p,
     [data-theme="dark"] div[data-testid="stRadioGroup"] label span,
     [data-theme="dark"] div[data-testid="stRadioGroup"] label div,
     [data-theme="dark"] div[data-testid="stRadioGroup"] [data-testid="stMarkdownContainer"] p,
-    [data-base-theme="dark"] div[data-testid="stRadio"] label p,
-    [data-base-theme="dark"] div[data-testid="stRadio"] label span,
-    [data-base-theme="dark"] div[data-testid="stRadio"] label div,
-    [data-base-theme="dark"] div[data-testid="stRadio"] [data-testid="stMarkdownContainer"] p,
+    [data-theme="dark"] div[role="radiogroup"] label p,
+    [data-theme="dark"] div[role="radiogroup"] [data-testid="stMarkdownContainer"] p,
     [data-base-theme="dark"] div[data-testid="stRadioGroup"] label p,
     [data-base-theme="dark"] div[data-testid="stRadioGroup"] label span,
     [data-base-theme="dark"] div[data-testid="stRadioGroup"] label div,
-    [data-base-theme="dark"] div[data-testid="stRadioGroup"] [data-testid="stMarkdownContainer"] p {{
+    [data-base-theme="dark"] div[data-testid="stRadioGroup"] [data-testid="stMarkdownContainer"] p,
+    [data-base-theme="dark"] div[role="radiogroup"] label p,
+    [data-base-theme="dark"] div[role="radiogroup"] [data-testid="stMarkdownContainer"] p {{
         color: #f8fafc !important;
     }}
 
