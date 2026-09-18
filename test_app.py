@@ -361,6 +361,11 @@ class TestQuizApp(unittest.TestCase):
         for q in dummy_state.exam_questions:
             self.assertEqual(q['subject'], 'computer')
 
+    def test_live_timer_fragment(self):
+        import views.exam_view as exam_view
+        self.assertTrue(hasattr(exam_view, 'render_live_timer'))
+        self.assertTrue(callable(exam_view.render_live_timer))
+
 if __name__ == '__main__':
     unittest.main()
 

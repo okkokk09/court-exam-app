@@ -238,6 +238,26 @@ QUICK SUBJECT EXAM
 </div>
 </div>''', unsafe_allow_html=True)
 
+@st.fragment(run_every="1s")
+def render_live_timer():
+    remaining_secs = quiz_engine.get_remaining_seconds(st.session_state)
+    duration_mins = st.session_state.get('duration_seconds', 3600) // 60
+    
+    if remaining_secs <= 0 and st.session_state.get('exam_active', False):
+        st.warning(f"⚠️ หมดเวลา {duration_mins} นาทีแล้ว! ระบบกำลังส่งข้อสอบและประมวลผล...")
+        quiz_engine.calculate_and_save_exam_results(st.session_state)
+        time.sleep(1)
+        st.rerun(scope="app")
+        
+    time_str = quiz_engine.format_time_hhmmss(remaining_secs)
+    crit_class = "timer-critical" if remaining_secs < 300 else ""
+    st.markdown(f'''
+    <div class="timer-container {crit_class}">
+        <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">⏱️ เวลาที่เหลือ</div>
+        <div class="timer-clock">{time_str}</div>
+    </div>
+    ''', unsafe_allow_html=True)
+
 def render_exam_in_progress():
     questions = st.session_state.exam_questions
     total_q = len(questions)
@@ -254,9 +274,6 @@ def render_exam_in_progress():
         quiz_engine.calculate_and_save_exam_results(st.session_state)
         time.sleep(1)
         st.rerun()
-        
-    time_str = quiz_engine.format_time_hhmmss(remaining_secs)
-    is_critical = remaining_secs < 300 # Less than 5 mins
     
     # Top Header & Timer Row
     col_t1, col_t2 = st.columns([2.2, 1.3])
@@ -283,13 +300,7 @@ def render_exam_in_progress():
         st.progress(progress_val, text=f"ทำแล้ว {len(st.session_state.user_answers)}/{total_q} ข้อ ({int(progress_val*100)}%)")
         
     with col_t2:
-        crit_class = "timer-critical" if is_critical else ""
-        st.markdown(f'''
-        <div class="timer-container {crit_class}">
-            <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">⏱️ เวลาที่เหลือ</div>
-            <div class="timer-clock">{time_str}</div>
-        </div>
-        ''', unsafe_allow_html=True)
+        render_live_timer()
 
     st.write("")
     
