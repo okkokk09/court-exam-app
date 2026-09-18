@@ -259,7 +259,7 @@ def render_exam_in_progress():
     is_critical = remaining_secs < 300 # Less than 5 mins
     
     # Top Header & Timer Row
-    col_t1, col_t2, col_t3 = st.columns([2.2, 1.3, 1.0])
+    col_t1, col_t2 = st.columns([2.2, 1.3])
     with col_t1:
         active_subj = st.session_state.get('exam_subject', st.session_state.get('selected_subject', 'law'))
         is_com = (active_subj == 'computer')
@@ -290,13 +290,6 @@ def render_exam_in_progress():
             <div class="timer-clock">{time_str}</div>
         </div>
         ''', unsafe_allow_html=True)
-
-    with col_t3:
-        st.write("")
-        if st.button("🚪 เลิกทำ (ไม่นับผล)", key="top_abandon_btn", use_container_width=True, help="ยกเลิกการสอบชุดนี้ทันที โดยไม่นำคะแนนไปบันทึกลงสถิติ"):
-            st.session_state.confirm_abandon = True
-            st.session_state.confirm_submit = False
-            st.rerun()
 
     st.write("")
     
