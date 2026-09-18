@@ -60,7 +60,7 @@ def render_subject_dashboard(subj_key, subj_name, primary_color):
     cur_user = st.session_state.get('current_user', 'เฟิส')
     stats = db.get_dashboard_stats(subject=subj_key, username=cur_user)
     
-    st.markdown(f"<h4 style='color: {primary_color}; margin-top: 6px;'>📌 ข้อมูลสถิติเฉพาะ ({cur_user}): {subj_name}</h4>", unsafe_allow_html=True)
+    st.markdown(f"<h4 style='color: {primary_color}; margin-top: 6px;'>📌 ข้อมูลสถิติ: {subj_name}</h4>", unsafe_allow_html=True)
     
     # 4 Key Metrics Row
     m1, m2, m3, m4 = st.columns(4)
@@ -330,16 +330,8 @@ def render_comparison_dashboard():
         
     st.write("---")
     with st.expander("⚙️ การจัดการข้อมูลสถิติ"):
-        cur_u = st.session_state.get('current_user', 'เฟิส')
-        st.warning(f"⚠️ การล้างสถิติจะลบประวัติการสอบ ข้อผิดใน Mistake Bank และบุ๊กมาร์กเฉพาะของโปรไฟล์ **{cur_u}**")
-        col_res1, col_res2 = st.columns(2)
-        with col_res1:
-            if st.button(f"🗑️ ล้างสถิติเฉพาะของ {cur_u}", type="secondary", use_container_width=True):
-                db.reset_all_statistics(username=cur_u)
-                st.success(f"ล้างสถิติของ {cur_u} เรียบร้อยแล้ว")
-                st.rerun()
-        with col_res2:
-            if st.button("🚨 ล้างสถิติทุกโปรไฟล์ (Reset All)", type="secondary", use_container_width=True):
-                db.reset_all_statistics()
-                st.success("ล้างสถิติทุกโปรไฟล์เรียบร้อยแล้ว")
-                st.rerun()
+        st.warning("⚠️ การล้างสถิติจะลบประวัติการสอบ ข้อผิดใน Mistake Bank และบุ๊กมาร์กทั้งหมด")
+        if st.button("🚨 ล้างสถิติและประวัติทั้งหมด (Reset Statistics)", type="secondary", use_container_width=True):
+            db.reset_all_statistics(username='เฟิส')
+            st.success("ล้างสถิติและประวัติทั้งหมดเรียบร้อยแล้ว")
+            st.rerun()

@@ -90,7 +90,7 @@ def render_practice_view():
                 <span class="quiz-info-title">ข้อที่ {idx + 1} จาก {total}</span>
             </div>
             <div>
-                <span class="quiz-info-meta">ID: {q['id']} ({cur_user})</span>
+                <span class="quiz-info-meta">ID: {q['id']}</span>
             </div>
         </div>
         ''', unsafe_allow_html=True)
