@@ -5,7 +5,9 @@ import os
 from datetime import datetime
 
 DB_PATH = os.path.join(os.path.dirname(__file__), 'exam_data.db')
-QUESTIONS_JSON_PATH = os.path.join(os.path.dirname(__file__), 'data', 'questions.json')
+# คลังข้อสอบกฎหมาย: สำนักงานอัยการสูงสุด (ข้อสอบศาลยุติธรรมเดิมถูกย้ายไปเก็บที่ data/archive/)
+QUESTIONS_JSON_PATH = os.path.join(os.path.dirname(__file__), 'data', 'oag_law_questions.json')
+LAW_ID_PREFIX = 'OAG'
 COMPUTER_JSON_PATH = os.path.join(os.path.dirname(__file__), 'data', 'computer_questions.json')
 
 def get_connection():
@@ -166,11 +168,21 @@ def init_db():
     # Seed and sync questions from JSON
     seed_questions_if_empty()
 
+def purge_legacy_court_questions(cursor):
+    '''ลบข้อสอบกฎหมายศาลยุติธรรมเดิม (รหัส Q001...) และสถิติ/บุ๊กมาร์กที่ผูกกับข้อเหล่านั้นออกจากฐานข้อมูล'''
+    legacy = "SELECT id FROM questions WHERE subject = 'law' AND id LIKE 'Q%' AND id NOT LIKE 'OAG%'"
+    cursor.execute(f"DELETE FROM question_stats WHERE question_id IN ({legacy})")
+    cursor.execute(f"DELETE FROM user_bookmarks WHERE question_id IN ({legacy})")
+    cursor.execute("DELETE FROM questions WHERE subject = 'law' AND id LIKE 'Q%' AND id NOT LIKE 'OAG%'")
+
 def seed_questions_if_empty():
     conn = get_connection()
     cursor = conn.cursor()
     
-    # Sync Law Questions
+    purge_legacy_court_questions(cursor)
+    conn.commit()
+    
+    # Sync Law Questions (สำนักงานอัยการสูงสุด)
     if os.path.exists(QUESTIONS_JSON_PATH):
         with open(QUESTIONS_JSON_PATH, 'r', encoding='utf-8') as f:
             items = json.load(f)
@@ -752,9 +764,10 @@ def add_custom_question(category, topic, question, options, answer_index, explan
     conn = get_connection()
     cursor = conn.cursor()
     
-    prefix = 'COM' if subject == 'computer' else 'Q'
-    cursor.execute('SELECT COUNT(*) as count FROM questions WHERE subject = ?', (subject,))
-    count = cursor.fetchone()['count'] + 1
+    prefix = 'COM' if subject == 'computer' else LAW_ID_PREFIX
+    cursor.execute('SELECT id FROM questions WHERE id LIKE ?', (f"{prefix}%",))
+    nums = [int(r['id'][len(prefix):]) for r in cursor.fetchall() if r['id'][len(prefix):].isdigit()]
+    count = (max(nums) if nums else 0) + 1
     new_id = f"{prefix}{count:03d}"
     
     cursor.execute('''

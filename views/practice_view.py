@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
+import exam_config
 import db
 import quiz_engine
 import legal_engine
@@ -168,7 +169,7 @@ def render_practice_view():
             # Explanation Box
             subj = q.get('subject', 'computer' if str(q.get('id', '')).startswith('COM') else 'law')
             ref_label = "📖 หมวดหมู่วิชา" if subj == 'computer' else "📖 อ้างอิง"
-            ref_val = (q.get('topic') or q.get('category', 'ทั่วไป')) if subj == 'computer' else q.get('law_ref', 'พ.ร.บ.ระเบียบบริหารราชการศาลยุติธรรม')
+            ref_val = (q.get('topic') or q.get('category', 'ทั่วไป')) if subj == 'computer' else q.get('law_ref', exam_config.get_active(st.session_state)['default_law_ref'])
             
             st.markdown(f'''
             <div class="{'explanation-box' if is_correct else 'explanation-wrong-box'}">

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
+import exam_config
 import json
 import db
 import styles
@@ -35,7 +36,7 @@ def render_search_tab():
     with c_s:
         subj_filter = st.selectbox(
             "📖 กรองตามวิชา:",
-            [('all', '📚 ทุกวิชาในระบบ'), ('law', '⚖️ กฎหมายศาลยุติธรรม'), ('computer', '💻 คอมพิวเตอร์และสารสนเทศ')],
+            [('all', '📚 ทุกวิชาในระบบ'), ('law', '⚖️ ' + exam_config.get_active(st.session_state)['law_short']), ('computer', '💻 คอมพิวเตอร์และสารสนเทศ')],
             index=0 if subject == 'all' else (1 if subject == 'law' else 2),
             format_func=lambda x: x[1]
         )
@@ -45,7 +46,7 @@ def render_search_tab():
     categories = ["ทั้งหมด"] + [c[0] for c in db.get_all_categories(subject=chosen_subj)]
     
     with c1:
-        search_query = st.text_input("🔍 ค้นหาคำสำคัญ, มาตรา หรือเนื้อหาข้อสอบ:", placeholder="เช่น ก.บ.ศ., CPU, มาตรา 10, Excel...")
+        search_query = st.text_input("🔍 ค้นหาคำสำคัญ, มาตรา หรือเนื้อหาข้อสอบ:", placeholder="เช่น อัยการสูงสุด, CPU, มาตรา 10, SQL...")
     with c2:
         cat_filter = st.selectbox("📂 กรองตามหมวดหมู่:", categories)
         
@@ -65,7 +66,7 @@ def render_search_tab():
     for i, q in enumerate(filtered):
         subj_icon = "💻" if q.get('subject') == 'computer' else "⚖️"
         with st.expander(f"{subj_icon} {q['id']} [{q['category']}]: {q['question'][:75]}..."):
-            st.markdown(f"**วิชา:** {'คอมพิวเตอร์และสารสนเทศ' if q.get('subject') == 'computer' else 'กฎหมายศาลยุติธรรม'} | **หัวข้อ:** {q.get('topic', '-')}")
+            st.markdown(f"**วิชา:** {exam_config.get_active(st.session_state)['computer_label'] if q.get('subject') == 'computer' else exam_config.get_active(st.session_state)['law_label']} | **หัวข้อ:** {q.get('topic', '-')}")
             st.markdown(f"**คำถาม:** {q['question']}")
             
             for c_idx, opt in enumerate(q['options']):
@@ -90,7 +91,7 @@ def render_add_tab():
     with st.form("add_question_form"):
         f_subj = st.selectbox(
             "วิชาข้อสอบ:",
-            [('law', '⚖️ วิชากฎหมายระเบียบบริหารศาลยุติธรรม'), ('computer', '💻 วิชาคอมพิวเตอร์และเทคโนโลยีสารสนเทศ')],
+            [('law', '⚖️ วิชา' + exam_config.get_active(st.session_state)['law_label']), ('computer', '💻 วิชาคอมพิวเตอร์และเทคโนโลยีสารสนเทศ')],
             index=0 if cur_subj == 'law' else 1,
             format_func=lambda x: x[1]
         )[0]
@@ -100,13 +101,13 @@ def render_add_tab():
             if f_subj == 'computer':
                 cat_options = ["ฮาร์ดแวร์และอุปกรณ์คอมพิวเตอร์", "ซอฟต์แวร์และระบบปฏิบัติการ", "โปรแกรมสำนักงานและงานเอกสาร", "ระบบเครือข่ายและอินเทอร์เน็ต", "ความมั่นคงปลอดภัยและ พ.ร.บ. คอมพิวเตอร์", "เทคโนโลยีดิจิทัลและ AI"]
             else:
-                cat_options = ["บททั่วไปและคำนิยาม", "สำนักงานศาลยุติธรรม", "คณะกรรมการบริหารศาลยุติธรรม (ก.บ.ศ.)", "คณะกรรมการข้าราชการศาลยุติธรรม (ก.ศ.)", "การบริหารงานบุคคล", "งบประมาณและการเงิน"]
+                cat_options = list(exam_config.get_active(st.session_state)['law_categories'])
             
         f_cat = st.selectbox("หมวดหมู่:", cat_options + ["กำหนดหมวดหมู่ใหม่..."])
         if f_cat == "กำหนดหมวดหมู่ใหม่...":
             f_cat = st.text_input("ระบุชื่อหมวดหมู่ใหม่:")
             
-        f_topic = st.text_input("หัวข้อย่อย (Topic):", placeholder="เช่น หน่วยความจำ RAM หรือ คุณสมบัติ ก.บ.ศ.")
+        f_topic = st.text_input("หัวข้อย่อย (Topic):", placeholder="เช่น หน่วยความจำ RAM หรือ อำนาจหน้าที่ของพนักงานอัยการ")
         f_question = st.text_area("คำถามข้อสอบ:", placeholder="พิมพ์คำถามข้อสอบ...")
         
         c1, c2 = st.columns(2)
@@ -118,7 +119,7 @@ def render_add_tab():
             opt_d = st.text_input("ตัวเลือก ง:")
             
         f_ans = st.selectbox("ตัวเลือกที่ถูกต้อง (เฉลย):", [0, 1, 2, 3], format_func=lambda x: f"ตัวเลือก {['ก', 'ข', 'ค', 'ง'][x]}")
-        f_law_ref = st.text_input("หัวข้อ/กฎหมายอ้างอิง:", placeholder="เช่น พ.ร.บ.คอมพิวเตอร์ฯ มาตรา 14 หรือ มาตรา 10 (1)")
+        f_law_ref = st.text_input("หัวข้อ/กฎหมายอ้างอิง:", placeholder="เช่น พ.ร.บ.คอมพิวเตอร์ฯ มาตรา 14 หรือ พ.ร.บ.องค์กรอัยการฯ มาตรา 14")
         f_explanation = st.text_area("คำอธิบายเฉลยละเอียด:", placeholder="ระบุเหตุผลและหลักวิชาการ/กฎหมาย...")
         
         submitted = st.form_submit_button("💾 บันทึกข้อสอบเข้าสู่ฐานข้อมูล", type="primary")

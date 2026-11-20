@@ -34,3 +34,5 @@ debug_pdf.txt
 # OS
 .DS_Store
 Thumbs.db
+
+data/archive/*.db

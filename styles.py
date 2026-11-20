@@ -2,7 +2,7 @@
 
 THEMES = {
     'court_navy': {
-        'name': '🏛️ กรมท่า-ทอง ศาลยุติธรรม (Classic Court Navy & Gold)',
+        'name': '🏛️ กรมท่า-ทอง คลาสสิก (Classic Navy & Gold)',
         'header_bg': 'linear-gradient(135deg, #0b2239 0%, #1e3a8a 50%, #1e40af 100%)',
         'header_border': 'rgba(212, 175, 55, 0.4)',
         'badge_bg': 'rgba(212, 175, 55, 0.2)',

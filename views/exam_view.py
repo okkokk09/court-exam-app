@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
+import exam_config
 import time
 import quiz_engine
 import db
@@ -25,7 +26,7 @@ def render_full_exam_lobby():
 <span style="font-size: 2.2rem;">🏆</span>
 <div>
 <h2 style="margin: 0; color: #fef08a; font-size: 1.7rem; font-weight: 700;">จำลองสอบจริงเต็มรูปแบบ (Full Exam Simulation)</h2>
-<p style="margin: 2px 0 0 0; color: #e2e8f0; font-size: 0.95rem;">จำลองสภาวะสอบเสมือนจริงของสำนักงานศาลยุติธรรม ภาคความรู้ความสามารถเฉพาะตำแหน่ง</p>
+<p style="margin: 2px 0 0 0; color: #e2e8f0; font-size: 0.95rem;">จำลองสภาวะสอบเสมือนจริง ภาคความรู้ความสามารถเฉพาะตำแหน่ง</p>
 </div>
 </div>
 <div>
@@ -34,7 +35,7 @@ def render_full_exam_lobby():
 </div>
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; background: rgba(0,0,0,0.25); padding: 14px 18px; border-radius: 12px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.1);">
 <div>
-<span style="color: #93c5fd; font-size: 0.85rem; font-weight: 600;">⚖️ หมวดกฎหมายระเบียบศาลฯ:</span><br>
+<span style="color: #93c5fd; font-size: 0.85rem; font-weight: 600;">⚖️ หมวดกฎหมาย:</span><br>
 <b style="color: #ffffff; font-size: 1rem;">30 ข้อ (60 คะแนน)</b>
 </div>
 <div>
@@ -54,7 +55,7 @@ def render_full_exam_lobby():
         st.markdown('''
         - **จำนวนข้อสอบ:** **100 ข้อ** (ข้อละ 2 คะแนน รวมเป็น **200 คะแนนเต็ม**)
         - **ลำดับข้อสอบในชุด:** รวม 2 หมวดวิชาไว้ในชุดเดียว โดยจัดเรียงลำดับ:
-          * ⚖️ **ข้อ 1 - 30:** หมวดกฎหมายและระเบียบศาลยุติธรรม (30 ข้อ / 60 คะแนน)
+          * ⚖️ **ข้อ 1 - 30:** หมวดกฎหมาย (30 ข้อ / 60 คะแนน)
           * 💻 **ข้อ 31 - 100:** หมวดคอมพิวเตอร์และเทคโนโลยีสารสนเทศ (70 ข้อ / 140 คะแนน)
         - **เวลาทำข้อสอบ:** **180 นาที (3 ชั่วโมงเต็ม)** มีระบบนับถอยหลัง `HH:MM:SS` และ **Auto-Submit** อัตโนมัติเมื่อหมดเวลา
         - **การสลับตำแหน่ง:** 🔀 **สุ่มสลับตำแหน่งตัวเลือก (ก, ข, ค, ง) อัตโนมัติ** ทุกรอบเพื่อป้องกันการท่องจำตำแหน่ง
@@ -152,6 +153,7 @@ def render_full_exam_lobby():
 </div>''', unsafe_allow_html=True)
 
 def render_quick_exam_lobby():
+    cfg = exam_config.get_active(st.session_state)
     subject = st.session_state.get('selected_subject', 'law')
     is_com = (subject == 'computer')
     
@@ -159,7 +161,7 @@ def render_quick_exam_lobby():
 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
 <div>
 <h3 style="margin: 0; color: #ffffff; font-size: 1.35rem; font-weight: 700;">
-{'💻 จำลองสอบรายวิชา: คอมพิวเตอร์และเทคโนโลยีสารสนเทศ' if is_com else '⚖️ จำลองสอบรายวิชา: กฎหมายระเบียบบริหารศาลยุติธรรม'}
+{'💻 จำลองสอบรายวิชา: ' + cfg['computer_label'] if is_com else '⚖️ จำลองสอบรายวิชา: ' + cfg['law_label']}
 </h3>
 <p style="margin: 3px 0 0 0; color: #e2e8f0; font-size: 0.9rem;">
 กำหนดจำนวนข้อและเวลาสอบได้ตามความต้องการ พร้อมจับเวลาและบันทึกสถิติรายวิชา
@@ -177,7 +179,7 @@ QUICK SUBJECT EXAM
     
     with col1:
         st.subheader("📋 กติกาและการจำลองสอบ")
-        subject_name = "วิชาคอมพิวเตอร์และเทคโนโลยีสารสนเทศ" if is_com else "คลังข้อสอบกฎหมายระเบียบบริหารศาลฯ"
+        subject_name = f"{cfg['name']} — วิชา{cfg['computer_label'] if is_com else cfg['law_label']}"
         available_q = len(db.get_all_questions(subject=subject))
         
         st.markdown(f'''
@@ -204,7 +206,7 @@ QUICK SUBJECT EXAM
 
     with col2:
         cur_user = st.session_state.get('current_user', 'เฟิส')
-        st.markdown(f"**📊 สถิติเฉพาะวิชา ({'คอมพิวเตอร์' if is_com else 'กฎหมายศาล'}):**")
+        st.markdown(f"**📊 สถิติเฉพาะวิชา ({cfg['computer_short'] if is_com else cfg['law_short']}):**")
         
         current_stats = db.get_dashboard_stats(subject=subject, username=cur_user)
         active_color = '#0284c7' if is_com else '#1e40af'
@@ -212,7 +214,7 @@ QUICK SUBJECT EXAM
         st.markdown(f'''<div style="background: #ffffff; border: 2px solid {active_color}; border-radius: 14px; padding: 18px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
 <span style="font-weight: 700; color: {active_color}; font-size: 0.95rem;">
-{'💻 คอมพิวเตอร์และสารสนเทศ' if is_com else '⚖️ กฎหมายระเบียบบริหารศาลฯ'}
+{'💻 ' + cfg['computer_short'] if is_com else '⚖️ ' + cfg['law_short']}
 </span>
 <span style="background: {'#e0f2fe' if is_com else '#eff6ff'}; color: {active_color}; font-size: 0.78rem; font-weight: 700; padding: 3px 8px; border-radius: 12px;">กำลังเลือก</span>
 </div>
@@ -276,6 +278,7 @@ def render_exam_in_progress():
         st.rerun()
     
     # Top Header & Timer Row
+    cfg = exam_config.get_active(st.session_state)
     col_t1, col_t2 = st.columns([2.2, 1.3])
     with col_t1:
         active_subj = st.session_state.get('exam_subject', st.session_state.get('selected_subject', 'law'))
@@ -288,7 +291,7 @@ def render_exam_in_progress():
         elif st.session_state.get('exam_mode') == 'review_test':
             mode_name = f"🔄 โหมดทบทวนข้อผิด ({'💻 วิชาคอมพิวเตอร์' if is_com else '⚖️ วิชากฎหมาย'})"
         else:
-            mode_name = "💻 จำลองสอบวิชาคอมพิวเตอร์และสารสนเทศ" if is_com else "⚖️ จำลองสอบวิชากฎหมายระเบียบบริหารศาลฯ"
+            mode_name = f"💻 จำลองสอบวิชา{cfg['computer_short']}" if is_com else f"⚖️ จำลองสอบวิชา{cfg['law_short']}"
             
         st.markdown(f'''
         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
@@ -529,7 +532,7 @@ def render_exam_results():
             st.markdown(f'''
             <div style="background: #ffffff; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 16px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="font-weight: 700; color: #1e40af; font-size: 1rem;">⚖️ หมวดกฎหมายระเบียบศาลฯ</span>
+                    <span style="font-weight: 700; color: #1e40af; font-size: 1rem;">⚖️ หมวดกฎหมาย</span>
                     <span style="background: #eff6ff; color: #1e40af; font-weight: 700; font-size: 0.85rem; padding: 2px 10px; border-radius: 12px;">{law_pct}%</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.92rem; margin-bottom: 4px;">
@@ -731,7 +734,7 @@ def render_exam_results():
                     
             subj = d.get('subject', 'computer' if str(d.get('id', '')).startswith('COM') or str(qid).startswith('COM') else 'law')
             ref_label = "📖 หมวดหมู่วิชา" if subj == 'computer' else "📖 อ้างอิง"
-            ref_val = (d.get('topic') or d.get('category', 'ทั่วไป')) if subj == 'computer' else d.get('law_ref', 'พ.ร.บ.ระเบียบบริหารราชการศาลยุติธรรม')
+            ref_val = (d.get('topic') or d.get('category', 'ทั่วไป')) if subj == 'computer' else d.get('law_ref', exam_config.get_active(st.session_state)['default_law_ref'])
             
             st.markdown(f'''
             <div class="{box_style}">

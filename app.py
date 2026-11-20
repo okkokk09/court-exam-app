@@ -4,6 +4,7 @@ import streamlit as st
 import db
 import quiz_engine
 import styles
+import exam_config
 import views.exam_view
 import views.review_view
 import views.practice_view
@@ -14,6 +15,7 @@ import views.manage_view
 importlib.reload(db)
 importlib.reload(quiz_engine)
 importlib.reload(styles)
+importlib.reload(exam_config)
 importlib.reload(views.exam_view)
 importlib.reload(views.review_view)
 importlib.reload(views.practice_view)
@@ -30,18 +32,25 @@ from views.manage_view import render_manage_view
 quiz_engine.init_session_state(st.session_state)
 
 # 2. Page Configuration
+if 'exam_category' not in st.session_state:
+    st.session_state.exam_category = exam_config.DEFAULT_CATEGORY
+exam_cfg = exam_config.get_active(st.session_state)
+full_exam_enabled = exam_cfg.get('full_exam_enabled', True)
+if not full_exam_enabled and st.session_state.get('current_page') == 'full_exam':
+    st.session_state.current_page = 'exam'
+
 cur_subject = st.session_state.get('selected_subject', 'law')
 is_com_subj = (cur_subject == 'computer')
 is_full_page = (st.session_state.get('current_page') == 'full_exam') or (st.session_state.get('exam_active') and st.session_state.get('exam_mode') == 'full_simulation')
 
 if is_full_page:
-    page_title = "จำลองสอบจริงเต็มรูปแบบ ศาลยุติธรรม (200 คะแนน 180 นาที)"
+    page_title = f"จำลองสอบจริงเต็มรูปแบบ {exam_cfg['short_name']} (200 คะแนน 180 นาที)"
     page_icon = "🏆"
 elif is_com_subj:
-    page_title = "ฝึกทำข้อสอบ คอมพิวเตอร์และเทคโนโลยีสารสนเทศ"
+    page_title = f"{exam_cfg['name']} | วิชา{exam_cfg['computer_label']}"
     page_icon = "💻"
 else:
-    page_title = "ฝึกทำข้อสอบ กฎหมายระเบียบบริหารราชการศาลยุติธรรม"
+    page_title = f"{exam_cfg['name']} | วิชา{exam_cfg['law_label']}"
     page_icon = "⚖️"
 
 st.set_page_config(
@@ -57,33 +66,33 @@ st.markdown(styles.get_custom_css(current_theme), unsafe_allow_html=True)
 
 # 4. App Header Banner
 if is_full_page:
-    header_html = '''<div class="app-header" style="background: linear-gradient(135deg, #0b2239 0%, #1e3a8a 50%, #1e40af 100%); border-left: 5px solid #d4af37;">
+    header_html = f'''<div class="app-header" style="background: linear-gradient(135deg, #0b2239 0%, #1e3a8a 50%, #1e40af 100%); border-left: 5px solid #d4af37;">
 <div>
-<h1 style="color: #fef08a;">🏆 ระบบจำลองสอบจริงเต็มรูปแบบ ศาลยุติธรรม (200 คะแนน 180 นาที)</h1>
-<p style="color: #e2e8f0;">ภาคความรู้ความสามารถเฉพาะตำแหน่ง | ข้อ 1-30: กฎหมายระเบียบศาลฯ (60 คะแนน) • ข้อ 31-100: คอมพิวเตอร์และสารสนเทศ (140 คะแนน)</p>
+<h1 style="color: #fef08a;">🏆 ระบบจำลองสอบจริงเต็มรูปแบบ {exam_cfg['short_name']} (200 คะแนน 180 นาที)</h1>
+<p style="color: #e2e8f0;">ภาคความรู้ความสามารถเฉพาะตำแหน่ง | ข้อ 1-30: {exam_cfg['law_short']} (60 คะแนน) • ข้อ 31-100: {exam_cfg['computer_short']} (140 คะแนน)</p>
 </div>
 <div style="text-align: right;">
 <span class="nav-badge" style="background: rgba(212, 175, 55, 0.25); border-color: #d4af37; color: #fef08a;">FULL EXAM 200 PTS</span>
 </div>
 </div>'''
 elif is_com_subj:
-    header_html = '''<div class="app-header">
+    header_html = f'''<div class="app-header">
 <div>
-<h1>💻 ระบบฝึกทำข้อสอบ คอมพิวเตอร์และเทคโนโลยีสารสนเทศ</h1>
-<p>ฮาร์ดแวร์ ซอฟต์แวร์ MS Office เครือข่าย ความปลอดภัยไซเบอร์ พ.ร.บ.คอมฯ และ AI | เตรียมสอบศาลยุติธรรมและข้าราชการ</p>
+<h1>💻 {exam_cfg['name']} — วิชา{exam_cfg['computer_label']}</h1>
+<p>ตำแหน่ง{exam_cfg['position']} | {exam_cfg['computer_desc']}</p>
 </div>
 <div style="text-align: right;">
-<span class="nav-badge">COMPUTER & IT EXAM PREP</span>
+<span class="nav-badge">{exam_cfg['badge']}</span>
 </div>
 </div>'''
 else:
-    header_html = '''<div class="app-header">
+    header_html = f'''<div class="app-header">
 <div>
-<h1>⚖️ ระบบฝึกทำข้อสอบ กฎหมายระเบียบบริหารราชการศาลยุติธรรม</h1>
-<p>พ.ร.บ. ระเบียบบริหารราชการศาลยุติธรรม พ.ศ. ๒๕๔๓ (และฉบับแก้ไขเพิ่มเติม) | เตรียมสอบเจ้าพนักงานศาลยุติธรรมและนิติกร</p>
+<h1>⚖️ {exam_cfg['name']} — วิชา{exam_cfg['law_label']}</h1>
+<p>ตำแหน่ง{exam_cfg['position']} | {exam_cfg['law_desc']}</p>
 </div>
 <div style="text-align: right;">
-<span class="nav-badge">COURT OF JUSTICE EXAM PREP</span>
+<span class="nav-badge">{exam_cfg['badge']}</span>
 </div>
 </div>'''
 st.markdown(header_html, unsafe_allow_html=True)
@@ -105,14 +114,14 @@ if not is_full_page:
     col_btn1, col_btn2, col_blank = st.columns([1.3, 1.3, 2.4])
     with col_btn1:
         law_type = "primary" if not is_com_subj else "secondary"
-        if st.button("⚖️ วิชากฎหมายศาลยุติธรรม", type=law_type, use_container_width=True, disabled=st.session_state.get('exam_active', False)):
+        if st.button(f"⚖️ วิชา{exam_cfg['law_short']}", type=law_type, use_container_width=True, disabled=st.session_state.get('exam_active', False)):
             if st.session_state.selected_subject != 'law':
                 switch_subject('law')
                 st.rerun()
 
     with col_btn2:
         com_type = "primary" if is_com_subj else "secondary"
-        if st.button("💻 วิชาคอมพิวเตอร์และสารสนเทศ", type=com_type, use_container_width=True, disabled=st.session_state.get('exam_active', False)):
+        if st.button(f"💻 วิชา{exam_cfg['computer_short']}", type=com_type, use_container_width=True, disabled=st.session_state.get('exam_active', False)):
             if st.session_state.selected_subject != 'computer':
                 switch_subject('computer')
                 st.rerun()
@@ -121,12 +130,12 @@ if not is_full_page:
 
 # 6. Sidebar Navigation
 with st.sidebar:
-    sidebar_icon = "🏆" if is_full_page else ("💻" if is_com_subj else "🏛️")
-    sidebar_title = "สอบจริงเต็มรูปแบบ" if is_full_page else ("วิชาคอมพิวเตอร์" if is_com_subj else "ศาลยุติธรรม")
+    sidebar_icon = "🏆" if is_full_page else ("💻" if is_com_subj else exam_cfg['icon'])
+    sidebar_title = "สอบจริงเต็มรูปแบบ" if is_full_page else ("วิชาคอมพิวเตอร์" if is_com_subj else exam_cfg['short_name'])
     st.markdown(f'''<div style="text-align: center; padding: 10px 0 16px 0;">
 <div style="font-size: 2.5rem;">{sidebar_icon}</div>
 <h3 style="margin: 4px 0 0 0; color: #1e3a8a;">{sidebar_title}</h3>
-<p style="font-size: 0.82rem; color: #64748b; margin: 0;">ระบบจำลองสอบ & ทบทวนข้อผิดซ้ำ</p>
+<p style="font-size: 0.82rem; color: #64748b; margin: 0;">ตำแหน่ง{exam_cfg['position']}</p>
 </div>''', unsafe_allow_html=True)
     
     # Fixed user profile to 'เฟิส'
@@ -134,16 +143,16 @@ with st.sidebar:
     
     # Subject Switcher in Sidebar
     if is_full_page:
-        st.markdown('''<div style="background: rgba(212, 175, 55, 0.12); border: 1.5px solid #d4af37; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; text-align: center;">
+        st.markdown(f'''<div style="background: rgba(212, 175, 55, 0.12); border: 1.5px solid #d4af37; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; text-align: center;">
 <div style="font-weight: 700; color: #d97706; font-size: 0.88rem;">🏆 รวม 2 หมวดวิชา (100 ข้อ)</div>
-<div style="font-size: 0.78rem; color: #64748b; margin-top: 3px;">ข้อ 1-30: กฎหมาย (60 คะแนน)<br>ข้อ 31-100: คอมพิวเตอร์ (140 คะแนน)</div>
+<div style="font-size: 0.78rem; color: #64748b; margin-top: 3px;">ข้อ 1-30: {exam_cfg['law_short']} (60 คะแนน)<br>ข้อ 31-100: คอมพิวเตอร์ (140 คะแนน)</div>
 </div>''', unsafe_allow_html=True)
     elif st.session_state.get('exam_active', False) and not st.session_state.get('exam_submitted', False):
         active_subj = st.session_state.get('exam_subject', cur_subject)
         is_active_com = (active_subj == 'computer')
         badge_color = '#0284c7' if is_active_com else '#1e40af'
         badge_bg = '#e0f2fe' if is_active_com else '#eff6ff'
-        badge_title = '💻 กำลังสอบ: วิชาคอมพิวเตอร์และสารสนเทศ' if is_active_com else '⚖️ กำลังสอบ: วิชากฎหมายศาลยุติธรรม'
+        badge_title = f"💻 กำลังสอบ: วิชา{exam_cfg['computer_short']}" if is_active_com else f"⚖️ กำลังสอบ: วิชา{exam_cfg['law_short']}"
         st.markdown(f'''<div style="background: {badge_bg}; border: 1.5px solid {badge_color}; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; text-align: center;">
 <div style="font-weight: 700; color: {badge_color}; font-size: 0.88rem;">{badge_title}</div>
 <div style="font-size: 0.78rem; color: #64748b; margin-top: 3px;">ข้อสอบกำลังดำเนินอยู่</div>
@@ -151,8 +160,8 @@ with st.sidebar:
     else:
         st.markdown("**📖 เลือกวิชาข้อสอบ (Subject):**")
         subject_options = {
-            'law': '⚖️ กฎหมายศาลยุติธรรม (พ.ร.บ. 2543)',
-            'computer': '💻 คอมพิวเตอร์ & สารสนเทศ'
+            'law': f"⚖️ {exam_cfg['law_short']}",
+            'computer': f"💻 {exam_cfg['computer_short']}"
         }
         chosen_subj = st.radio(
             "Subject Selection",
@@ -278,7 +287,7 @@ with st.sidebar:
         db_stats = db.get_dashboard_stats(subject=cur_subject, username=active_user)
         st.markdown(f'''
         <div style="background: #f1f5f9; padding: 14px; border-radius: 12px; font-size: 0.85rem; border: 1px solid #e2e8f0;">
-            <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">📈 สรุปภาพรวม ({ "คอมพิวเตอร์" if is_com_subj else "กฎหมายศาล" })</div>
+            <div style="font-weight: 700; color: #0f172a; margin-bottom: 6px;">📈 สรุปภาพรวม ({ "คอมพิวเตอร์" if is_com_subj else exam_cfg['law_short'] })</div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                 <span style="color: #64748b;">คลังข้อสอบ:</span>
                 <b>{db_stats['total_bank_questions']} ข้อ</b>
@@ -299,7 +308,7 @@ with st.sidebar:
         ''', unsafe_allow_html=True)
     
     st.write("")
-    st.caption("พัฒนาสำหรับเตรียมสอบข้าราชการศาลยุติธรรม © 2026")
+    st.caption(f"พัฒนาสำหรับเตรียมสอบ{exam_cfg['short_name']} © 2026")
 
 # 7. Main View Router
 if st.session_state.current_page in ('exam', 'full_exam'):
@@ -312,4 +321,3 @@ elif st.session_state.current_page == 'stats':
     render_stats_view()
 elif st.session_state.current_page == 'manage':
     render_manage_view()
-

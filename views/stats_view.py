@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
+import exam_config
 import db
 
 def render_stats_view():
@@ -54,7 +55,7 @@ def render_stats_view():
         if is_com:
             render_subject_dashboard('computer', '💻 วิชาคอมพิวเตอร์และเทคโนโลยีสารสนเทศ', '#0284c7')
         else:
-            render_subject_dashboard('law', '⚖️ วิชากฎหมายศาลยุติธรรม', '#1e40af')
+            render_subject_dashboard('law', '⚖️ วิชา' + exam_config.get_active(st.session_state)['law_label'], '#1e40af')
 
 def render_subject_dashboard(subj_key, subj_name, primary_color):
     cur_user = st.session_state.get('current_user', 'เฟิส')
@@ -281,7 +282,7 @@ def render_comparison_dashboard():
     with c_law:
         st.markdown('''
         <div style="background: #eff6ff; border: 2px solid #3b82f6; border-radius: 14px; padding: 18px; margin-bottom: 16px;">
-            <h4 style="color: #1e3a8a; margin: 0 0 12px 0;">⚖️ วิชากฎหมายศาลยุติธรรม</h4>
+            <h4 style="color: #1e3a8a; margin: 0 0 12px 0;">⚖️ วิชากฎหมาย</h4>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <div class="stat-card" style="background: white !important;">
                     <div class="stat-label">คลังข้อสอบ</div>

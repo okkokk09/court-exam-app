@@ -30,11 +30,15 @@ class TestQuizApp(unittest.TestCase):
         
     def test_database_questions(self):
         questions = db.get_all_questions()
-        self.assertGreaterEqual(len(questions), 100, 'Database should contain at least 100 questions (Law + Computer)')
+        self.assertGreaterEqual(len(questions), 800, 'Database should contain at least 800 questions (400 OAG Law + 415 Computer)')
+        
+        # Ensure legacy Court of Justice questions (Q001..) are completely purged
+        legacy_qs = [q for q in questions if q['id'].startswith('Q') and not q['id'].startswith('OAG')]
+        self.assertEqual(len(legacy_qs), 0, 'Legacy Court of Justice law questions must be completely removed')
         
         # Verify question structure
         for q in questions[:10]:
-            self.assertTrue(q['id'].startswith('Q') or q['id'].startswith('COM'))
+            self.assertTrue(q['id'].startswith('OAG') or q['id'].startswith('COM'))
             self.assertEqual(len(q['options']), 4)
             self.assertIn(q['answer_index'], [0, 1, 2, 3])
             self.assertTrue(len(q['explanation']) > 0)
@@ -43,7 +47,7 @@ class TestQuizApp(unittest.TestCase):
     def test_subjects_filtering(self):
         law_qs = db.get_all_questions(subject='law')
         com_qs = db.get_all_questions(subject='computer')
-        self.assertGreaterEqual(len(law_qs), 50, 'Should have at least 50 Law questions')
+        self.assertEqual(len(law_qs), 400, 'Should have exactly 400 OAG Law questions')
         self.assertGreaterEqual(len(com_qs), 50, 'Should have at least 50 Computer questions')
         
         # Check random sampling for subjects
