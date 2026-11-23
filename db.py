@@ -793,5 +793,121 @@ def reset_all_statistics(username=None):
     conn.commit()
     conn.close()
 
+def export_user_data(username='เฟิส'):
+    '''ส่งออกประวัติการสอบ สถิติรายข้อ และบุ๊กมาร์กทั้งหมดของผู้ใช้เป็น Dict สำหรับบันทึกเป็น JSON'''
+    user = username or 'เฟิส'
+    conn = get_connection()
+    cursor = conn.cursor()
+    
+    # 1. Exam sessions
+    cursor.execute('''
+    SELECT created_at, subject, mode, category, total_questions, score, percentage, time_spent_seconds, answers_json
+    FROM exam_sessions
+    WHERE username = ? OR (username IS NULL AND ? = 'เฟิส')
+    ORDER BY id ASC
+    ''', (user, user))
+    sessions = [dict(r) for r in cursor.fetchall()]
+    
+    # 2. Question stats
+    cursor.execute('''
+    SELECT question_id, times_answered, times_correct, times_wrong, wrong_options_json, last_answered_at, last_result, mastery_level
+    FROM question_stats
+    WHERE username = ? OR (username IS NULL AND ? = 'เฟิส')
+    ''', (user, user))
+    stats = [dict(r) for r in cursor.fetchall()]
+    
+    # 3. Bookmarks
+    cursor.execute('''
+    SELECT question_id, created_at, note
+    FROM user_bookmarks
+    WHERE username = ? OR (username IS NULL AND ? = 'เฟิส')
+    ''', (user, user))
+    bookmarks = [dict(r) for r in cursor.fetchall()]
+    
+    conn.close()
+    
+    return {
+        'version': '1.0',
+        'exported_at': datetime.now().isoformat(),
+        'target_exam': 'นักวิชาการคอมพิวเตอร์ปฏิบัติการ สำนักงานอัยการสูงสุด (ภาค ข. 200 คะแนน)',
+        'username': user,
+        'summary': {
+            'total_sessions': len(sessions),
+            'total_stats_records': len(stats),
+            'total_bookmarks': len(bookmarks)
+        },
+        'exam_sessions': sessions,
+        'question_stats': stats,
+        'user_bookmarks': bookmarks
+    }
+
+def import_user_data(data: dict, username='เฟิส') -> tuple:
+    '''นำเข้าประวัติการสอบ สถิติรายข้อ และบุ๊กมาร์กจากข้อมูล JSON (ป้องกันข้อมูลหายบน Streamlit Cloud)'''
+    user = username or 'เฟิส'
+    if not isinstance(data, dict):
+        return False, "รูปแบบไฟล์ข้อมูลไม่ถูกต้อง (ต้องเป็น JSON Object)"
+    
+    sessions = data.get('exam_sessions', [])
+    stats = data.get('question_stats', [])
+    bookmarks = data.get('user_bookmarks', [])
+    
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        # 1. Import exam sessions
+        for s in sessions:
+            cursor.execute('''
+            INSERT INTO exam_sessions (username, created_at, subject, mode, category, total_questions, score, percentage, time_spent_seconds, answers_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                user,
+                s.get('created_at', datetime.now().isoformat()),
+                s.get('subject', 'law'),
+                s.get('mode', 'practice'),
+                s.get('category', 'ทั่วไป'),
+                s.get('total_questions', 0),
+                s.get('score', 0),
+                s.get('percentage', 0.0),
+                s.get('time_spent_seconds', 0),
+                s.get('answers_json', '[]')
+            ))
+            
+        # 2. Import question stats (Upsert)
+        for qs in stats:
+            cursor.execute('''
+            INSERT OR REPLACE INTO question_stats (question_id, username, times_answered, times_correct, times_wrong, wrong_options_json, last_answered_at, last_result, mastery_level)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                qs.get('question_id'),
+                user,
+                qs.get('times_answered', 0),
+                qs.get('times_correct', 0),
+                qs.get('times_wrong', 0),
+                qs.get('wrong_options_json', '{}'),
+                qs.get('last_answered_at'),
+                qs.get('last_result', 0),
+                qs.get('mastery_level', 0)
+            ))
+            
+        # 3. Import user bookmarks (Upsert)
+        for bm in bookmarks:
+            cursor.execute('''
+            INSERT OR REPLACE INTO user_bookmarks (question_id, username, created_at, note)
+            VALUES (?, ?, ?, ?)
+            ''', (
+                bm.get('question_id'),
+                user,
+                bm.get('created_at', datetime.now().isoformat()),
+                bm.get('note', '')
+            ))
+            
+        conn.commit()
+        conn.close()
+        return True, f"นำเข้าข้อมูลสำเร็จเรียบร้อย! (ประวัติสอบ: {len(sessions)} ชุด, สถิติสะสม: {len(stats)} ข้อ, บุ๊กมาร์ก: {len(bookmarks)} ข้อ)"
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        return False, f"เกิดข้อผิดพลาดในการนำเข้าข้อมูล: {str(e)}"
+
 # Initialize upon import
 init_db()

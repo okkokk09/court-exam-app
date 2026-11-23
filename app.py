@@ -10,6 +10,8 @@ import views.review_view
 import views.practice_view
 import views.stats_view
 import views.manage_view
+import views.knowledge_view
+import views.subjective_view
 
 # Ensure hot-reload resilience on Streamlit Cloud
 importlib.reload(db)
@@ -21,12 +23,16 @@ importlib.reload(views.review_view)
 importlib.reload(views.practice_view)
 importlib.reload(views.stats_view)
 importlib.reload(views.manage_view)
+importlib.reload(views.knowledge_view)
+importlib.reload(views.subjective_view)
 
 from views.exam_view import render_exam_view
 from views.review_view import render_review_view
 from views.practice_view import render_practice_view
 from views.stats_view import render_stats_view
 from views.manage_view import render_manage_view
+from views.knowledge_view import render_knowledge_view
+from views.subjective_view import render_subjective_view
 
 # 1. Initialize Session State
 quiz_engine.init_session_state(st.session_state)
@@ -42,10 +48,18 @@ if not full_exam_enabled and st.session_state.get('current_page') == 'full_exam'
 cur_subject = st.session_state.get('selected_subject', 'law')
 is_com_subj = (cur_subject == 'computer')
 is_full_page = (st.session_state.get('current_page') == 'full_exam') or (st.session_state.get('exam_active') and st.session_state.get('exam_mode') == 'full_simulation')
+is_subjective_page = (st.session_state.get('current_page') == 'subjective')
+is_knowledge_page = (st.session_state.get('current_page') == 'knowledge')
 
 if is_full_page:
     page_title = f"จำลองสอบจริงเต็มรูปแบบ {exam_cfg['short_name']} (200 คะแนน 180 นาที)"
     page_icon = "🏆"
+elif is_subjective_page:
+    page_title = f"สนามฝึกข้อเขียนอัตนัย 100 คะแนน | {exam_cfg['short_name']}"
+    page_icon = "✍️"
+elif is_knowledge_page:
+    page_title = f"คลังสรุปจุดหลอกกฎหมาย | {exam_cfg['short_name']}"
+    page_icon = "📖"
 elif is_com_subj:
     page_title = f"{exam_cfg['name']} | วิชา{exam_cfg['computer_label']}"
     page_icon = "💻"
@@ -73,6 +87,26 @@ if is_full_page:
 </div>
 <div style="text-align: right;">
 <span class="nav-badge" style="background: rgba(212, 175, 55, 0.25); border-color: #d4af37; color: #fef08a;">FULL EXAM 200 PTS</span>
+</div>
+</div>'''
+elif is_subjective_page:
+    header_html = f'''<div class="app-header" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%); border-left: 5px solid #818cf8;">
+<div>
+<h1 style="color: #ffffff;">✍️ สนามฝึกข้อเขียนอัตนัย (Subjective Exam Lab - 100 คะแนน)</h1>
+<p style="color: #c7d2fe;">SQL Query Lab (SQLite) • ER-Diagram & System Design (Mermaid.js) • Code & Security Vulnerability Fix (OWASP)</p>
+</div>
+<div style="text-align: right;">
+<span class="nav-badge" style="background: rgba(129, 140, 248, 0.25); border-color: #818cf8; color: #e0e7ff;">SUBJECTIVE 100 PTS</span>
+</div>
+</div>'''
+elif is_knowledge_page:
+    header_html = f'''<div class="app-header" style="background: linear-gradient(135deg, #14532d 0%, #166534 50%, #15803d 100%); border-left: 5px solid #4ade80;">
+<div>
+<h1 style="color: #ffffff;">📖 คลังสรุปจุดหลอกกฎหมาย (OAG Legal Traps & Cheatsheets)</h1>
+<p style="color: #bbf7d0;">สรุปประเด็นตัวเลข โครงสร้างองค์กร อำนาจหน้าที่ และจุดที่มักออกข้อสอบหลอก สำหรับสำนักงานอัยการสูงสุด</p>
+</div>
+<div style="text-align: right;">
+<span class="nav-badge" style="background: rgba(74, 222, 128, 0.25); border-color: #4ade80; color: #f0fdf4;">KNOWLEDGE BASE</span>
 </div>
 </div>'''
 elif is_com_subj:
@@ -110,7 +144,7 @@ def switch_subject(new_subj):
     st.session_state.review_show_answer = False
 
 # 5. Quick Subject Switcher Buttons (Top Toolbar - Only shown for single-subject pages)
-if not is_full_page:
+if not is_full_page and not is_subjective_page and not is_knowledge_page:
     col_btn1, col_btn2, col_blank = st.columns([1.3, 1.3, 2.4])
     with col_btn1:
         law_type = "primary" if not is_com_subj else "secondary"
@@ -130,8 +164,8 @@ if not is_full_page:
 
 # 6. Sidebar Navigation
 with st.sidebar:
-    sidebar_icon = "🏆" if is_full_page else ("💻" if is_com_subj else exam_cfg['icon'])
-    sidebar_title = "สอบจริงเต็มรูปแบบ" if is_full_page else ("วิชาคอมพิวเตอร์" if is_com_subj else exam_cfg['short_name'])
+    sidebar_icon = "🏆" if is_full_page else ("✍️" if is_subjective_page else ("📖" if is_knowledge_page else ("💻" if is_com_subj else exam_cfg['icon'])))
+    sidebar_title = "สอบจริงเต็มรูปแบบ" if is_full_page else ("ข้อเขียนอัตนัย" if is_subjective_page else ("จุดหลอกกฎหมาย" if is_knowledge_page else ("วิชาคอมพิวเตอร์" if is_com_subj else exam_cfg['short_name'])))
     st.markdown(f'''<div style="text-align: center; padding: 10px 0 16px 0;">
 <div style="font-size: 2.5rem;">{sidebar_icon}</div>
 <h3 style="margin: 4px 0 0 0; color: #1e3a8a;">{sidebar_title}</h3>
@@ -146,6 +180,16 @@ with st.sidebar:
         st.markdown(f'''<div style="background: rgba(212, 175, 55, 0.12); border: 1.5px solid #d4af37; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; text-align: center;">
 <div style="font-weight: 700; color: #d97706; font-size: 0.88rem;">🏆 รวม 2 หมวดวิชา (100 ข้อ)</div>
 <div style="font-size: 0.78rem; color: #64748b; margin-top: 3px;">ข้อ 1-30: {exam_cfg['law_short']} (60 คะแนน)<br>ข้อ 31-100: คอมพิวเตอร์ (140 คะแนน)</div>
+</div>''', unsafe_allow_html=True)
+    elif is_subjective_page:
+        st.markdown(f'''<div style="background: #eef2ff; border: 1.5px solid #6366f1; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; text-align: center;">
+<div style="font-weight: 700; color: #4338ca; font-size: 0.88rem;">✍️ ฝึกข้อเขียนอัตนัย (100 คะแนน)</div>
+<div style="font-size: 0.78rem; color: #64748b; margin-top: 3px;">SQL Lab • ERD Design • Code Fix</div>
+</div>''', unsafe_allow_html=True)
+    elif is_knowledge_page:
+        st.markdown(f'''<div style="background: #f0fdf4; border: 1.5px solid #22c55e; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; text-align: center;">
+<div style="font-weight: 700; color: #15803d; font-size: 0.88rem;">📖 สรุปจุดหลอกกฎหมาย</div>
+<div style="font-size: 0.78rem; color: #64748b; margin-top: 3px;">กฎหมาย 6 ฉบับ + นโยบาย อสส.</div>
 </div>''', unsafe_allow_html=True)
     elif st.session_state.get('exam_active', False) and not st.session_state.get('exam_submitted', False):
         active_subj = st.session_state.get('exam_subject', cur_subject)
@@ -178,11 +222,13 @@ with st.sidebar:
     st.markdown("**📌 เลือกโหมดการทำงาน:**")
     
     nav_options = {
-        'full_exam': '🏆 สอบจริงเต็มรูปแบบ (200 คะแนน 180 นาที)',
+        'full_exam': '🏆 สอบจริงเต็มรูปแบบ (Mock Exam 200 คะแนน)',
         'exam': '🏛️ จำลองสอบรายวิชา (Quick Exam)',
         'review': '🔄 ทบทวนข้อผิดซ้ำ (Mistake Bank)',
-        'practice': '📚 ฝึกทำแยกหมวดหมู่ (Practice)',
-        'stats': '📊 แดชบอร์ดสถิติ & จุดอ่อน',
+        'practice': '📚 ฝึกทำแยก 9 หมวดวิชา (Practice)',
+        'subjective': '✍️ สนามฝึกข้อเขียนอัตนัย (100 คะแนน)',
+        'knowledge': '📖 คลังสรุปจุดหลอกกฎหมาย',
+        'stats': '📊 แดชบอร์ดสถิติ & กู้คืนข้อมูล',
         'manage': '⚙️ คลังข้อสอบ & จัดการ'
     }
     
@@ -317,6 +363,10 @@ elif st.session_state.current_page == 'review':
     render_review_view()
 elif st.session_state.current_page == 'practice':
     render_practice_view()
+elif st.session_state.current_page == 'subjective':
+    render_subjective_view()
+elif st.session_state.current_page == 'knowledge':
+    render_knowledge_view()
 elif st.session_state.current_page == 'stats':
     render_stats_view()
 elif st.session_state.current_page == 'manage':

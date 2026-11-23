@@ -3,6 +3,7 @@ import time
 import random
 import re
 import db
+import exam_config
 
 def init_session_state(st_session_state):
     '''Initialize core state variables in Streamlit session_state'''
@@ -113,6 +114,42 @@ def start_full_simulation_exam(st_session_state, duration_minutes=180):
     st_session_state.exam_result = None
     st_session_state.confirm_submit = False
     st_session_state.confirm_abandon = False
+
+def start_oag_category_quiz(st_session_state, cat_id, count=30, duration_minutes=40):
+    '''
+    Starts a targeted exam session for one of the 9 OAG categories.
+    '''
+    cat_info = exam_config.get_category_by_id(cat_id)
+    if not cat_info:
+        return False
+        
+    all_qs = db.get_all_questions()
+    matching_qs = [q for q in all_qs if exam_config.map_question_to_oag_category(q)['id'] == cat_id]
+    
+    if not matching_qs:
+        matching_qs = db.get_all_questions(subject=cat_info['subject'])
+        
+    sampled_qs = random.sample(matching_qs, min(count, len(matching_qs)))
+    
+    if st_session_state.get('shuffle_options', True):
+        sampled_qs = shuffle_questions_list(sampled_qs)
+        
+    st_session_state.exam_active = True
+    st_session_state.exam_submitted = False
+    st_session_state.exam_mode = 'oag_category'
+    st_session_state.exam_subject = cat_info['subject']
+    st_session_state.selected_subject = cat_info['subject']
+    st_session_state.exam_questions = sampled_qs
+    st_session_state.user_answers = {}
+    st_session_state.bookmarked_indices = set()
+    st_session_state.current_q_idx = 0
+    st_session_state.start_time = time.time()
+    st_session_state.duration_seconds = duration_minutes * 60
+    st_session_state.time_spent = 0
+    st_session_state.exam_result = None
+    st_session_state.confirm_submit = False
+    st_session_state.confirm_abandon = False
+    return True
 
 def start_simulation_exam(st_session_state, count=50, duration_minutes=60, category=None, subject=None):
     if not subject:
@@ -239,6 +276,7 @@ def calculate_and_save_exam_results(st_session_state):
     
     details = {}
     category_breakdown = {}
+    oag_category_breakdown = {}
     mistake_questions = []
     
     # Subject breakdown
@@ -290,6 +328,20 @@ def calculate_and_save_exam_results(st_session_state):
             status = 'wrong'
             mistake_questions.append(q)
             
+        # Map to 9 OAG Categories
+        oag_cat = exam_config.map_question_to_oag_category(q)
+        oag_cat_name = oag_cat['name']
+        if oag_cat_name not in oag_category_breakdown:
+            oag_category_breakdown[oag_cat_name] = {
+                'total': 0, 'correct': 0, 'wrong': 0,
+                'cat_id': oag_cat['id'], 'short': oag_cat['short'], 'icon': oag_cat['icon']
+            }
+        oag_category_breakdown[oag_cat_name]['total'] += 1
+        if is_correct:
+            oag_category_breakdown[oag_cat_name]['correct'] += 1
+        else:
+            oag_category_breakdown[oag_cat_name]['wrong'] += 1
+
         details[qid] = {
             'q_idx': idx,
             'subject': subj,
@@ -372,6 +424,7 @@ def calculate_and_save_exam_results(st_session_state):
         'time_spent_str': format_time_hhmmss(time_spent),
         'subject_stats': subject_stats,
         'category_breakdown': category_breakdown,
+        'oag_category_breakdown': oag_category_breakdown,
         'details': details
     }
     

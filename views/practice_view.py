@@ -17,17 +17,39 @@ def render_practice_view():
     ''', unsafe_allow_html=True)
     
     subject = st.session_state.get('selected_subject', 'law')
-    categories = db.get_all_categories(subject=subject)
-    cat_names = ["ทั้งหมด"] + [c[0] for c in categories]
+    
+    # 9 OAG Categories Filter Options
+    oag_cats = exam_config.get_oag_9_categories()
+    oag_options = [('all', '🌟 ทั้งหมด (ทุกหมวดวิชา)')] + [(c['id'], f"{c['icon']} {c['name']}") for c in oag_cats]
+    
+    filter_mode = st.radio(
+        "โหมดการกรองข้อสอบ:",
+        options=['oag_9', 'db_sub'],
+        format_func=lambda x: "🎯 เลือกตาม 9 หมวดวิชาหลัก อสส." if x == 'oag_9' else "📑 เลือกตามหมวดหมู่ย่อยในคลัง",
+        horizontal=True,
+        key="practice_filter_mode_radio"
+    )
     
     col1, col2, col3 = st.columns([2, 1, 1])
     with col1:
-        selected_cat = st.selectbox(
-            "📂 เลือกหมวดหมู่ที่ต้องการฝึกทำ:",
-            cat_names,
-            index=0,
-            key="practice_cat_select"
-        )
+        if filter_mode == 'oag_9':
+            selected_cat_tuple = st.selectbox(
+                "📂 เลือกหมวดวิชาสอบ อสส.:",
+                oag_options,
+                format_func=lambda x: x[1],
+                index=0,
+                key="practice_oag_cat_select"
+            )
+            selected_cat = selected_cat_tuple[0]
+        else:
+            categories = db.get_all_categories(subject=subject)
+            cat_names = ["ทั้งหมด"] + [c[0] for c in categories]
+            selected_cat = st.selectbox(
+                "📂 เลือกหมวดหมู่ย่อยในคลัง:",
+                cat_names,
+                index=0,
+                key="practice_cat_select"
+            )
     with col2:
         st.write("")
         st.write("")
@@ -38,22 +60,39 @@ def render_practice_view():
         if st.button("🔄 เริ่มหมวดนี้ใหม่", use_container_width=True, help="ล้างข้อที่ทำค้างไว้และเริ่มข้อที่ 1 ใหม่โดยไม่กระทบสถิติ"):
             st.session_state.practice_q_idx = 0
             st.session_state.practice_show_answer = False
-            raw_qs = db.get_all_questions(category=selected_cat if selected_cat != "ทั้งหมด" else None, subject=subject)
+            if filter_mode == 'oag_9':
+                all_qs = db.get_all_questions()
+                if selected_cat != 'all':
+                    raw_qs = [q for q in all_qs if exam_config.map_question_to_oag_category(q)['id'] == selected_cat]
+                else:
+                    raw_qs = [q for q in all_qs if q.get('subject') == subject or subject == 'all']
+            else:
+                raw_qs = db.get_all_questions(category=selected_cat if selected_cat != "ทั้งหมด" else None, subject=subject)
             st.session_state.practice_loaded_qs = quiz_engine.shuffle_questions_list(raw_qs) if shuffle_choices_opt else raw_qs
             st.rerun()
         
     # Check if category changed to reload questions
     current_cat_state = st.session_state.get('practice_current_cat', None)
     current_subj_state = st.session_state.get('practice_current_subj', None)
+    current_mode_state = st.session_state.get('practice_current_mode', None)
     
-    if current_cat_state != selected_cat or current_subj_state != subject or 'practice_loaded_qs' not in st.session_state:
-        raw_qs = db.get_all_questions(category=selected_cat if selected_cat != "ทั้งหมด" else None, subject=subject)
+    if current_cat_state != selected_cat or current_subj_state != subject or current_mode_state != filter_mode or 'practice_loaded_qs' not in st.session_state:
+        if filter_mode == 'oag_9':
+            all_qs = db.get_all_questions()
+            if selected_cat != 'all':
+                raw_qs = [q for q in all_qs if exam_config.map_question_to_oag_category(q)['id'] == selected_cat]
+            else:
+                raw_qs = [q for q in all_qs if q.get('subject') == subject or subject == 'all']
+        else:
+            raw_qs = db.get_all_questions(category=selected_cat if selected_cat != "ทั้งหมด" else None, subject=subject)
+            
         if shuffle_choices_opt:
             st.session_state.practice_loaded_qs = quiz_engine.shuffle_questions_list(raw_qs)
         else:
             st.session_state.practice_loaded_qs = raw_qs
         st.session_state.practice_current_cat = selected_cat
         st.session_state.practice_current_subj = subject
+        st.session_state.practice_current_mode = filter_mode
         st.session_state.practice_q_idx = 0
         st.session_state.practice_answers = {}
         
@@ -85,10 +124,12 @@ def render_practice_view():
 
     with col_main:
         # Header bar
+        oag_cat = exam_config.map_question_to_oag_category(q)
         st.markdown(f'''
         <div class="quiz-info-bar">
             <div>
                 <span class="quiz-info-title">ข้อที่ {idx + 1} จาก {total}</span>
+                <span style="background: rgba(59, 130, 246, 0.15); color: #2563eb; font-size: 0.8rem; font-weight: 600; padding: 3px 8px; border-radius: 6px; margin-left: 8px;">{oag_cat['icon']} {oag_cat['short']}</span>
             </div>
             <div>
                 <span class="quiz-info-meta">ID: {q['id']}</span>

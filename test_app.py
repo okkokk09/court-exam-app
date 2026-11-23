@@ -26,7 +26,7 @@ class TestQuizApp(unittest.TestCase):
                 pass
 
     def setUp(self):
-        pass
+        db.reset_all_statistics()
         
     def test_database_questions(self):
         questions = db.get_all_questions()
@@ -369,6 +369,93 @@ class TestQuizApp(unittest.TestCase):
         import views.exam_view as exam_view
         self.assertTrue(hasattr(exam_view, 'render_live_timer'))
         self.assertTrue(callable(exam_view.render_live_timer))
+
+
+    def test_oag_9_categories_and_mapping(self):
+        import exam_config
+        cats = exam_config.get_oag_9_categories()
+        self.assertEqual(len(cats), 9, 'Must have exactly 9 OAG syllabus categories')
+        
+        for i in range(1, 10):
+            cat = exam_config.get_category_by_id(i)
+            self.assertIsNotNone(cat)
+            self.assertEqual(cat['number'], i)
+            self.assertTrue(len(cat['name']) > 0)
+            self.assertTrue(len(cat['short']) > 0)
+            self.assertTrue(len(cat['icon']) > 0)
+            
+        q_law = {'category': 'พ.ร.บ.องค์กรอัยการและพนักงานอัยการ พ.ศ. 2553', 'subject': 'law', 'law_ref': 'มาตรา 14'}
+        cat = exam_config.map_question_to_oag_category(q_law)
+        self.assertEqual(cat['number'], 1)
+
+        q_cyber = {'category': 'พ.ร.บ.การรักษาความมั่นคงปลอดภัยไซเบอร์ พ.ศ. 2562', 'subject': 'law'}
+        cat = exam_config.map_question_to_oag_category(q_cyber)
+        self.assertEqual(cat['number'], 3)
+
+        q_prog = {'category': 'การเขียนคำสั่งให้เครื่องคอมพิวเตอร์ทำงาน', 'subject': 'computer'}
+        cat = exam_config.map_question_to_oag_category(q_prog)
+        self.assertEqual(cat['number'], 8)
+
+    def test_export_and_import_user_data(self):
+        q = db.get_all_questions()[0]
+        qid = q['id']
+        db.record_answer(qid, q['answer_index'], is_correct=True, username='เฟิส')
+        db.toggle_bookmark(qid, note='ข้อที่ต้องจำ', username='เฟิส')
+        
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+        INSERT INTO exam_sessions (username, subject, mode, category, total_questions, score, percentage, time_spent_seconds, answers_json)
+        VALUES ('เฟิส', 'law', 'simulation', 'ทั้งหมด', 50, 45, 90.0, 1200, '[]')
+        ''')
+        conn.commit()
+        conn.close()
+        
+        backup = db.export_user_data(username='เฟิส')
+        self.assertEqual(backup['username'], 'เฟิส')
+        self.assertGreaterEqual(backup['summary']['total_sessions'], 1)
+        self.assertGreaterEqual(backup['summary']['total_stats_records'], 1)
+        self.assertGreaterEqual(backup['summary']['total_bookmarks'], 1)
+        
+        db.reset_all_statistics(username='เฟิส')
+        self.assertEqual(len(db.get_all_bookmarks(username='เฟิส')), 0)
+        self.assertEqual(db.get_dashboard_stats(username='เฟิส')['total_exams'], 0)
+        
+        success, msg = db.import_user_data(backup, username='เฟิส')
+        self.assertTrue(success, f'Import should succeed: {msg}')
+        self.assertIn(qid, db.get_all_bookmarks(username='เฟิส'))
+        self.assertGreaterEqual(db.get_dashboard_stats(username='เฟิส')['total_exams'], 1)
+
+    def test_knowledge_base_files_exist(self):
+        kb_dir = os.path.join(os.path.dirname(__file__), 'knowledge_base')
+        self.assertTrue(os.path.exists(kb_dir), 'knowledge_base directory must exist')
+        
+        md_files = [f for f in os.listdir(kb_dir) if f.endswith('.md')]
+        self.assertGreaterEqual(len(md_files), 7, 'Must contain at least 7 OAG knowledge markdown files')
+        
+        for fname in md_files:
+            fpath = os.path.join(kb_dir, fname)
+            with open(fpath, 'r', encoding='utf-8') as f:
+                c = f.read()
+                self.assertGreater(len(c), 100, f'File {fname} should have substantive content')
+
+    def test_subjective_sql_database(self):
+        import views.subjective_view as subj_view
+        conn = subj_view.create_sample_oag_db()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT COUNT(*) as cnt FROM cases')
+        cases_count = cursor.fetchone()['cnt']
+        self.assertGreaterEqual(cases_count, 6)
+        
+        cursor.execute('SELECT COUNT(*) as cnt FROM attorneys')
+        attorneys_count = cursor.fetchone()['cnt']
+        self.assertGreaterEqual(attorneys_count, 5)
+        
+        df, err = subj_view.run_custom_query(conn, "SELECT case_id, title, status FROM cases WHERE status = 'สั่งฟ้องแล้ว'")
+        self.assertIsNone(err)
+        self.assertFalse(df.empty)
+        conn.close()
 
 if __name__ == '__main__':
     unittest.main()

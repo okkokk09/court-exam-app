@@ -223,14 +223,14 @@ def render_interactive_review(questions):
                     )
                     
             # Explanation Box
-            subj = q.get('subject', 'computer' if str(q.get('id', '')).startswith('COM') else 'law')
-            ref_label = "📖 หมวดหมู่วิชา" if subj == 'computer' else "📖 อ้างอิง"
-            ref_val = (q.get('topic') or q.get('category', 'ทั่วไป')) if subj == 'computer' else q.get('law_ref', exam_config.get_active(st.session_state)['default_law_ref'])
+            oag_cat = exam_config.map_question_to_oag_category(q)
+            law_ref_text = q.get('law_ref', '')
+            law_ref_badge = f'<span class="law-ref-pill" style="margin-left: 6px;">⚖️ {law_ref_text}</span>' if law_ref_text else ''
             exp_box_class = 'explanation-box' if is_correct else 'explanation-wrong-box'
             exp_text = q.get('explanation', '')
             st.markdown(
                 f'<div class="{exp_box_class}">'
-                f'<span class="law-ref-pill">{ref_label}: {ref_val}</span><br>'
+                f'<span class="law-ref-pill">{oag_cat["icon"]} {oag_cat["short"]}</span>{law_ref_badge}<br>'
                 f'<b>เหตุผลและคำอธิบาย:</b> {exp_text}</div>',
                 unsafe_allow_html=True
             )
