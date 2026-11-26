@@ -457,6 +457,48 @@ class TestQuizApp(unittest.TestCase):
         self.assertFalse(df.empty)
         conn.close()
 
+
+    def test_important_dates_countdown(self):
+        import views.exam_view as ev
+        self.assertTrue(hasattr(ev, 'render_important_dates_countdown'))
+        self.assertTrue(callable(ev.render_important_dates_countdown))
+        
+        from datetime import datetime, timezone, timedelta
+        tz_bkk = timezone(timedelta(hours=7))
+        now = datetime.now(tz_bkk)
+        app_dl = datetime(2026, 12, 17, 23, 59, 59, tzinfo=tz_bkk)
+        pay_dl = datetime(2026, 12, 18, 21, 0, 0, tzinfo=tz_bkk)
+        
+        # Deadlines should be strictly in the future for test period (Dec 2026)
+        self.assertGreater(app_dl, now, "Application deadline 17 Dec 2569 must be in the future")
+        self.assertGreater(pay_dl, app_dl, "Payment deadline 18 Dec 2569 21:00 must be after application deadline")
+
+    def test_oag_job_duties_scenario_questions(self):
+        import exam_config
+        com_qs = db.get_all_questions(subject='computer')
+        self.assertGreaterEqual(len(com_qs), 445, "Must have at least 445 computer questions including 30 new scenario questions")
+        
+        # Verify COM416 to COM445 exist and reference document 7
+        scenario_ids = [f"COM{i}" for i in range(416, 446)]
+        scenario_qs = [q for q in com_qs if q['id'] in scenario_ids]
+        self.assertEqual(len(scenario_qs), 30, "Must find all 30 scenario questions (COM416 - COM445)")
+        
+        cat8_found = 0
+        cat9_found = 0
+        for q in scenario_qs:
+            self.assertEqual(len(q['options']), 4)
+            self.assertIn(q['answer_index'], [0, 1, 2, 3])
+            self.assertTrue('เอกสารแนบท้ายหมายเลข ๗' in q['explanation'] or 'เอกสารแนบท้ายหมายเลข ๗' in q['law_ref'])
+            cat = exam_config.map_question_to_oag_category(q)
+            self.assertIn(cat['number'], [8, 9])
+            if cat['number'] == 8:
+                cat8_found += 1
+            elif cat['number'] == 9:
+                cat9_found += 1
+                
+        self.assertEqual(cat8_found, 15, "Must have exactly 15 scenario questions mapped to Category 8 (Programming)")
+        self.assertEqual(cat9_found, 15, "Must have exactly 15 scenario questions mapped to Category 9 (Systems & Security)")
+
 if __name__ == '__main__':
     unittest.main()
 

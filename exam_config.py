@@ -157,7 +157,41 @@ def map_question_to_oag_category(q):
     text = (q.get('question', '') + " " + q.get('explanation', '') + " " + law_ref + " " + topic + " " + q_cat).lower()
     subject = q.get('subject', 'law')
     
-    # 1. Check for specific law / regulation matches
+    # 1. Computer Subject Routing (Categories 8 & 9)
+    if subject == 'computer':
+        prog_cat_indicators = ['การเขียนคำสั่ง', 'การเขียนโปรแกรม', 'programming', 'code', 'algorithm', 'python', 'sql']
+        if any(ind in q_cat.lower() for ind in prog_cat_indicators):
+            return OAG_9_CATEGORIES[7] # Cat 8: Programming
+            
+        sys_cat_indicators = ['เครือข่าย', 'ระบบคอมพิวเตอร์', 'ฮาร์ดแวร์', 'ความมั่นคง', 'security', 'network', 'hardware', 'ระบบปฏิบัติการ']
+        if any(ind in q_cat.lower() for ind in sys_cat_indicators):
+            return OAG_9_CATEGORIES[8] # Cat 9: Systems & Security
+            
+        prog_keywords = [
+            'python', 'code', 'programming', 'loop', 'algorithm', 'function', 'class',
+            'array', 'string', 'variable', 'syntax', 'c++', 'java', 'sql', 'query',
+            'เขียนคำสั่ง', 'เขียนโปรแกรม', 'ขั้นตอนวิธี', 'โครงสร้างข้อมูล',
+            'ตรรกะ', 'อัลกอริทึม', 'object-oriented', 'oop', 'api', 'framework', 'unit test', 'regex'
+        ]
+        systems_keywords = [
+            'hardware', 'อุปกรณ์', 'เครือข่าย', 'network', 'ความมั่นคงปลอดภัย', 'security',
+            'firewall', 'server', 'แม่ข่าย', 'raid', 'dns', 'forensics', 'log', 'active directory',
+            'ups', 'data center', 'ศูนย์ข้อมูล', 'พัสดุ', 'พ.ร.บ.คอมพิวเตอร์'
+        ]
+        
+        is_prog = any(kw in text for kw in prog_keywords)
+        is_sys = any(kw in text for kw in systems_keywords)
+        
+        if is_prog and not is_sys:
+            return OAG_9_CATEGORIES[7] # Cat 8
+        elif is_sys and not is_prog:
+            return OAG_9_CATEGORIES[8] # Cat 9
+        elif is_prog:
+            return OAG_9_CATEGORIES[7] # Cat 8
+        else:
+            return OAG_9_CATEGORIES[8] # Cat 9
+        
+    # 2. Law Subject Routing (Categories 1-7)
     if 'สารบรรณ' in text:
         return OAG_9_CATEGORIES[4] # Cat 5
     if 'จัดซื้อจัดจ้าง' in text or 'พัสดุ' in text:
@@ -172,18 +206,6 @@ def map_question_to_oag_category(q):
         return OAG_9_CATEGORIES[6] # Cat 7
     if 'องค์กรอัยการ' in text or 'พนักงานอัยการ' in text or 'อัยการสูงสุด' in text:
         return OAG_9_CATEGORIES[0] # Cat 1
-        
-    # 2. Check for computer categories
-    if subject == 'computer':
-        prog_keywords = [
-            'python', 'code', 'programming', 'loop', 'algorithm', 'function', 'class',
-            'array', 'string', 'variable', 'syntax', 'c++', 'java', 'sql', 'query',
-            'เขียนคำสั่ง', 'เขียนโปรแกรม', 'โปรแกรม', 'การพัฒนา', 'ขั้นตอนวิธี', 'โครงสร้างข้อมูล',
-            'ตรรกะ', 'อัลกอริทึม', 'object-oriented', 'oop', 'api', 'framework', 'database', 'ฐานข้อมูล'
-        ]
-        if any(kw in text for kw in prog_keywords):
-            return OAG_9_CATEGORIES[7] # Cat 8: Programming
-        return OAG_9_CATEGORIES[8] # Cat 9: Systems, Network & Security
         
     # Default fallback by subject
     return OAG_9_CATEGORIES[0] if subject == 'law' else OAG_9_CATEGORIES[8]

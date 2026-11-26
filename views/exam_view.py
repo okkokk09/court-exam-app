@@ -9,6 +9,7 @@ import legal_engine
 
 def render_exam_view():
     if not st.session_state.exam_active and not st.session_state.exam_submitted:
+        render_important_dates_countdown()
         is_full_page = (st.session_state.get('current_page') == 'full_exam')
         if is_full_page:
             render_full_exam_lobby()
@@ -18,6 +19,76 @@ def render_exam_view():
         render_exam_in_progress()
     elif st.session_state.exam_submitted:
         render_exam_results()
+
+def render_important_dates_countdown():
+    '''ตัวนับถอยหลัง (Countdown) วันสำคัญในการรับสมัครสอบนักวิชาการคอมพิวเตอร์ อสส.'''
+    from datetime import datetime, timezone, timedelta
+    
+    tz_bkk = timezone(timedelta(hours=7))
+    now = datetime.now(tz_bkk)
+    
+    # 1. วันปิดรับสมัครทางอินเทอร์เน็ต: 17 ธันวาคม 2569 เวลา 23:59:59 น.
+    app_deadline = datetime(2026, 12, 17, 23, 59, 59, tzinfo=tz_bkk)
+    # 2. วันปิดรับชำระเงินค่าธรรมเนียม: 18 ธันวาคม 2569 เวลา 21.00 น.
+    pay_deadline = datetime(2026, 12, 18, 21, 0, 0, tzinfo=tz_bkk)
+    
+    diff_app = app_deadline - now
+    diff_pay = pay_deadline - now
+    
+    def fmt_cd(td):
+        if td.total_seconds() <= 0:
+            return "สิ้นสุดกำหนดแล้ว", "#ef4444"
+        days = td.days
+        hours, rem = divmod(td.seconds, 3600)
+        mins, _ = divmod(rem, 60)
+        color = "#ef4444" if days < 3 else ("#f59e0b" if days < 7 else "#10b981")
+        return f"{days:02d} วัน {hours:02d} ชม. {mins:02d} นาที", color
+        
+    app_str, app_col = fmt_cd(diff_app)
+    pay_str, pay_col = fmt_cd(diff_pay)
+    
+    st.markdown(f'''<div style="background: linear-gradient(135deg, #0b192c 0%, #1e293b 50%, #0f172a 100%); border-radius: 16px; padding: 18px 24px; margin-bottom: 22px; border: 1.5px solid #38bdf8; box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.25);">
+<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px;">
+<div style="display: flex; align-items: center; gap: 10px;">
+<span style="font-size: 1.6rem;">⏱️</span>
+<div>
+<span style="color: #ffffff; font-size: 1.12rem; font-weight: 800;">ปฏิทินนับถอยหลังวันสำคัญ (Official Exam Countdown)</span>
+<span style="color: #94a3b8; font-size: 0.85rem; margin-left: 8px;">• ตำแหน่งนักวิชาการคอมพิวเตอร์ปฏิบัติการ สำนักงานอัยการสูงสุด (๑๑ อัตรา)</span>
+</div>
+</div>
+<div style="font-size: 0.82rem; color: #38bdf8; background: rgba(56, 189, 248, 0.15); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(56, 189, 248, 0.3); font-weight: 600;">
+📢 ประกาศรับสมัคร 12 พ.ย. 2569
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+<div style="background: rgba(15, 23, 42, 0.8); border: 1.5px solid #1e3a8a; border-radius: 12px; padding: 14px 18px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+<span style="color: #93c5fd; font-weight: 700; font-size: 0.95rem;">⏳ วันปิดรับสมัครทางอินเทอร์เน็ต</span>
+<span style="background: #1e3a8a; color: #60a5fa; font-size: 0.75rem; padding: 2px 8px; border-radius: 8px; font-weight: 600;">ตลอด 24 ชม.</span>
+</div>
+<div style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 8px;">
+📅 วันสุดท้าย: <b>17 ธันวาคม 2569</b> (เวลา 23:59:59 น.)
+</div>
+<div style="background: rgba(0, 0, 0, 0.35); border-radius: 8px; padding: 8px 12px; text-align: center; border: 1px dashed {app_col};">
+<span style="font-size: 1.25rem; font-weight: 900; color: {app_col}; font-family: monospace;">{app_str}</span><br>
+<span style="font-size: 0.78rem; color: #94a3b8;">เว็บไซต์รับสมัคร: <a href="https://ago.thaijobjob.com" target="_blank" style="color: #38bdf8; font-weight: 600; text-decoration: none;">ago.thaijobjob.com</a></span>
+</div>
+</div>
+<div style="background: rgba(15, 23, 42, 0.8); border: 1.5px solid #065f46; border-radius: 12px; padding: 14px 18px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+<span style="color: #6ee7b7; font-weight: 700; font-size: 0.95rem;">💳 วันปิดรับชำระเงินค่าธรรมเนียม</span>
+<span style="background: #064e3b; color: #34d399; font-size: 0.75rem; padding: 2px 8px; border-radius: 8px; font-weight: 600;">ปิด 21.00 น.</span>
+</div>
+<div style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 8px;">
+📅 วันสุดท้าย: <b>18 ธันวาคม 2569</b> (เวลา 21:00:00 น.)
+</div>
+<div style="background: rgba(0, 0, 0, 0.35); border-radius: 8px; padding: 8px 12px; text-align: center; border: 1px dashed {pay_col};">
+<span style="font-size: 1.25rem; font-weight: 900; color: {pay_col}; font-family: monospace;">{pay_str}</span><br>
+<span style="font-size: 0.78rem; color: #94a3b8;">ค่าธรรมเนียม 430 บ. • Krungthai NEXT / เป๋าตัง (Code: 95762)</span>
+</div>
+</div>
+</div>
+</div>''', unsafe_allow_html=True)
 
 def render_full_exam_lobby():
     st.markdown('''<div style="background: linear-gradient(135deg, #0b2239 0%, #1e3a8a 50%, #1e40af 100%); padding: 26px 30px; border-radius: 18px; color: white; margin-bottom: 24px; border: 2px solid #d4af37; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">

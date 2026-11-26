@@ -294,6 +294,33 @@ with st.sidebar:
         
     st.write("---")
     
+    # Important Dates Countdown Widget in Sidebar
+    from datetime import datetime, timezone, timedelta
+    tz_bkk = timezone(timedelta(hours=7))
+    now = datetime.now(tz_bkk)
+    app_dl = datetime(2026, 12, 17, 23, 59, 59, tzinfo=tz_bkk)
+    pay_dl = datetime(2026, 12, 18, 21, 0, 0, tzinfo=tz_bkk)
+    d_app = app_dl - now
+    d_pay = pay_dl - now
+    d_app_str = f"{d_app.days} วัน {d_app.seconds // 3600} ชม." if d_app.total_seconds() > 0 else "สิ้นสุดแล้ว"
+    d_pay_str = f"{d_pay.days} วัน {d_pay.seconds // 3600} ชม." if d_pay.total_seconds() > 0 else "สิ้นสุดแล้ว"
+    
+    st.markdown(f'''
+    <div style="background: #0f172a; padding: 12px 14px; border-radius: 12px; font-size: 0.82rem; border: 1.5px solid #38bdf8; margin-bottom: 14px; color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+        <div style="font-weight: 700; color: #38bdf8; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; font-size: 0.88rem;">
+            <span>⏱️</span> <span>นับถอยหลังวันสำคัญ อสส.</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.8rem;">
+            <span style="color: #94a3b8;">⏳ ปิดรับสมัคร:</span>
+            <b style="color: #60a5fa;">17 ธ.ค. ({d_app_str})</b>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+            <span style="color: #94a3b8;">💳 ปิดจ่ายเงิน:</span>
+            <b style="color: #34d399;">18 ธ.ค. 21น. ({d_pay_str})</b>
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
+    
     # Sidebar Quick Stats Widget
     active_user = st.session_state.get('current_user', 'เฟิส')
     if is_full_page:
